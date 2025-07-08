@@ -16,7 +16,7 @@ import {
   updateMoM,
   fetchMoMView,
 } from "@/store/features/pre-project/momSlice";
-import { submitCause } from "@/store/features/causeSlice";
+import { submitCause } from "@/store/features/pre-project/causeSlice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,7 +53,7 @@ function MeetingDetailsWithMOM({ isOpen, onClose, meeting, TIME_ZONE }) {
   const [signatureFile, setSignatureFile] = useState(null);
   const [signaturePreview, setSignaturePreview] = useState(null);
   const containerRef = useRef(null);
-console.log("meet",meeting)
+
   // Form state for creating/editing MoM
   const [momForm, setMomForm] = useState({
     agenda: meeting?.agenda || "",
@@ -77,11 +77,6 @@ console.log("meet",meeting)
   };
 
   // Helper: Compute duration as "startTime - endTime"
-  // const getDurationString = () => {
-  //   const start = formatTimes(meeting?.start?.dateTime);
-  //   const end = formatTimes(meeting?.end?.dateTime);
-  //   return start && end ? `${start} - ${end}` : "";
-  // };
 const getDurationString = useCallback(() => {
   const start = formatTimes(meeting?.start?.dateTime);
   const end = formatTimes(meeting?.end?.dateTime);
@@ -97,13 +92,7 @@ const getDurationString = useCallback(() => {
   };
 
   // Helper: Check if meeting has ended and 1-hour window has passed
-  // const checkMeetingTimeStatus = () => {
-  //   if (!meeting?.end?.dateTime) return false;
-  //   const endTime = new Date(meeting.end.dateTime);
-  //   const now = new Date();
-  //   const oneHourAfterEnd = addHours(endTime, 1);
-  //   return isAfter(now, oneHourAfterEnd);
-  // };
+
 const checkMeetingTimeStatus = useCallback(() => {
   if (!meeting?.end?.dateTime) return false;
   const endTime = new Date(meeting.end.dateTime);
@@ -591,16 +580,12 @@ const checkMeetingTimeStatus = useCallback(() => {
                   <span className="text-sm sm:text-base">This MoM was created with reference to a delay cause.</span>
                 </div>
               )}
-              {
-
-                console.log("222",momByMeetingId.attachmentUrl
-)
-              }
+           
               {momView?.pdfUrl ? (
                 <div className="w-full h-[300px] sm:h-[400px] rounded-lg border border-green-200 overflow-auto">
-                  <iframe src={momView.pdfUrl} width="100%" height="100%" className="rounded-lg" title="MoM PDF Preview" />
-                  {/* <iframe src={momByMeetingId.attachmentUrl} width="100%" height="100%" className="rounded-lg" title="MoM PDF Preview" /> */}
                   {/* <iframe src={momView.pdfUrl} width="100%" height="100%" className="rounded-lg" title="MoM PDF Preview" /> */}
+                  {/* <iframe src={momByMeetingId.attachmentUrl} width="100%" height="100%" className="rounded-lg" title="MoM PDF Preview" /> */}
+                  <iframe src={momView.pdfUrl} width="100%" height="100%" className="rounded-lg" title="MoM PDF Preview" />
                 </div>
               ) : (
                 <div className="space-y-3 text-green-700 text-sm sm:text-base">

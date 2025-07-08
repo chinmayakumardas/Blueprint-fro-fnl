@@ -1,4 +1,4 @@
-import ContactMeetingsManager from "@/components/modules/meetings/ContactMeetingsManager";
+import ContactMeetingsManager from "@/modules/meetings/ContactMeetingsManager";
 
 
 export default function Page() {

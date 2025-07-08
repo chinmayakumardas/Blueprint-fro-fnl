@@ -381,7 +381,7 @@ export function SectionCardEmployee() {
   const isTasksLoading = taskStatus === "loading" || !loadedCards.tasks;
 
   // Individual card components to reduce re-renders
-  const ProjectsCards = useMemo(
+  const ProjectsCardsEmployee = useMemo(
     () =>
       isProjectsLoading ? (
         <CardSkeleton />
@@ -410,7 +410,7 @@ export function SectionCardEmployee() {
     [isProjectsLoading, counts.employeeProjects]
   );
 
-  const TasksCards = useMemo(
+  const TasksCardsEmployee = useMemo(
     () =>
       isTasksLoading ? (
         <CardSkeleton />
@@ -439,7 +439,7 @@ export function SectionCardEmployee() {
     [isTasksLoading, counts.tasks]
   );
 
-  const GrowthCards = useMemo(
+  const GrowthCardsEmployee = useMemo(
     () => (
       <Card className="@container/card">
         <CardHeader>
@@ -467,9 +467,9 @@ export function SectionCardEmployee() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4 lg:px-6">
-      {ProjectsCards}
-      {TasksCards}
-      {GrowthCards}
+      {ProjectsCardsEmployee}
+      {TasksCardsEmployee}
+      {GrowthCardsEmployee}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import CalendarContainer from "@/components/modules/meetings/calendar/CalendarConatiner";
+import CalendarContainer from "@/modules/meetings/calendar/CalendarConatiner";
 
 
 export default function Page() {

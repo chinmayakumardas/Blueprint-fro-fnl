@@ -6,7 +6,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useDispatch, useSelector } from "react-redux";
 import { createQuotation } from "@/store/features/pre-project/quotationSlice";
-import { serviceProviderDetails } from "@/lib/utils/constant";
+import { serviceProviderDetails } from "@/utils/constant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

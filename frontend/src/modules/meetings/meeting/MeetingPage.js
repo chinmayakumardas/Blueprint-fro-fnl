@@ -9,7 +9,7 @@ import {
   updateMeeting,
   deleteMeeting,
   clearError,
-} from "@/store/features/meetingSlice";
+} from "@/store/features/pre-project/meetingSlice";
 import { fetchAllSlots } from "@/store/features/master/slotMasterSlice";
 import { Button } from "@/components/ui/button";
 import {
@@ -75,7 +75,7 @@ import CodeVerificationModal from "./MeetcodeModal";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { toast } from '@/components/ui/sonner';
 import MeetingDetailsWithMOM from "../mom/MeetingDetailsWithMOM";
-import { fetchMoM } from '@/store/features/momSlice';
+import { fetchMoM } from '@/store/features/pre-project/momSlice';
 import { useRouter } from "next/navigation";
 
 
@@ -438,8 +438,8 @@ function MeetingDetails({ meeting, onClose }) {
 
 
 
-import MeetingAccessGate from '@/components/modules/meetings/meetingAccessController/MeetingAccessGate'; // Import the new component
-import { email } from "@/lib/utils/constant";
+import MeetingAccessGate from '@/modules/meetings/meetingAccessController/MeetingAccessGate'; // Import the new component
+import { email } from "@/utils/constant";
 
 
 

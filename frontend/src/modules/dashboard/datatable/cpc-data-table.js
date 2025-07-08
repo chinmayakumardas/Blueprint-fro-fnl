@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import * as React from "react";
@@ -323,7 +321,10 @@ export function DataTable() {
   };
 
   // Check if all data is still loading for initial render
-  const allDataLoading = status === "loading" && projectStatus === "loading" && teamStatus === "loading";
+  const allDataLoading =
+    status === "loading" &&
+    projectStatus === "loading" &&
+    teamStatus === "loading";
 
   return (
     <div className="p-4 lg:p-6">
@@ -404,9 +405,8 @@ export function DataTable() {
                 )}
                 {status === "failed" && (
                   <div className="text-center text-sm  min-h-[50vh] flex justify-center items-center">
-No tasks available
-</div>
-
+                    No tasks available
+                  </div>
                 )}
                 {status === "succeeded" && data?.data?.length > 0 ? (
                   <>
@@ -457,7 +457,6 @@ No tasks available
                 ) : (
                   status === "succeeded" && (
                     <div className="text-center text-sm text-muted-foreground min-h-[50vh] flex justify-center items-center">
-                      
                       No tasks available
                     </div>
                   )
@@ -473,7 +472,7 @@ No tasks available
                     ))}
                   </div>
                 )}
-                {  projects.length > 0 ? (
+                {projects.length > 0 ? (
                   <>
                     {paginate(projects, page.projects).map((project) => (
                       <Dialog

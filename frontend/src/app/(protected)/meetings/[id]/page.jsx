@@ -4,7 +4,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import MeetingsPage from "@/components/modules/meetings/meeting/MeetingPage";
+import MeetingsPage from "@/modules/meetings/meeting/MeetingPage";
 
 export default function MeetingDetailsPage() {
   const { id } = useParams(); // Extract meeting ID from URL

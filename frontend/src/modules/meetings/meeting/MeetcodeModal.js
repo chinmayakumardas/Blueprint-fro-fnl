@@ -1,6 +1,6 @@
 
 "use client";
-import axiosInstance3 from "@/lib/axios";
+import {axiosInstance3} from "@/lib/axios";
 import { useState } from "react";
 
 export default function CodeVerificationModal({

@@ -31,7 +31,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-import { formatRange } from '@/lib/utils/formatRange'; // create helper
+import { formatRange } from '@/utils/formatDate'; // create helper
 
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllMeetings } from '@/store/features/calender/meetingCalendarSlice';

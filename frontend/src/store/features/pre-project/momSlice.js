@@ -39,11 +39,11 @@ export const fetchMoMView = createAsyncThunk(
       });
 
       // Log response details for debugging
-      console.log('fetchMoMView response:', {
-        status: response.status,
-        headers: response.headers,
-        contentType: response.headers['content-type'],
-      });
+      // console.log('fetchMoMView response:', {
+      //   status: response.status,
+      //   headers: response.headers,
+      //   contentType: response.headers['content-type'],
+      // });
 
       // Validate response is a PDF
       const contentType = response.headers['content-type'];
@@ -54,12 +54,12 @@ export const fetchMoMView = createAsyncThunk(
       const pdfUrl = URL.createObjectURL(response.data); // Use response.data directly
       return { pdfUrl, momId };
     } catch (error) {
-      console.error('fetchMoMView error:', {
-        message: error.message,
-        response: error.response,
-        status: error.response?.status,
-        data: error.response?.data,
-      });
+      // console.error('fetchMoMView error:', {
+      //   message: error.message,
+      //   response: error.response,
+      //   status: error.response?.status,
+      //   data: error.response?.data,
+      // });
       return rejectWithValue(error.message || 'Failed to fetch MoM PDF');
     }
   }
@@ -73,7 +73,7 @@ export const createMoM = createAsyncThunk(
     try {
       console.log("Payload being sent:", momData); // Debug: Log the FormData
       for (let [key, value] of momData.entries()) {
-        console.log(`${key}:`, value); // Debug: Log FormData entries
+        // console.log(`${key}:`, value); // Debug: Log FormData entries
       }
       const response = await axiosInstance.post("/mom/createmom", momData, {
         headers: {
@@ -82,7 +82,7 @@ export const createMoM = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
-      console.error("Error in createMoM:", error); // Debug: Log errors
+      // console.error("Error in createMoM:", error); // Debug: Log errors
       return rejectWithValue(error.response?.data?.message || "Failed to create MoM");
     }
   }
@@ -93,9 +93,9 @@ export const updateMoM = createAsyncThunk(
   "mom/updateMoM",
   async (momData, { rejectWithValue }) => {
     try {
-      console.log("Payload being sent:", momData); // Debug: Log the FormData
+      // console.log("Payload being sent:", momData); // Debug: Log the FormData
       for (let [key, value] of momData.entries()) {
-        console.log(`${key}:`, value); // Debug: Log FormData entries
+        // console.log(`${key}:`, value); // Debug: Log FormData entries
       }
       const response = await axiosInstance.put("/mom/update", momData, {
         headers: {
@@ -104,7 +104,7 @@ export const updateMoM = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
-      console.error("Error in updateMoM:", error); // Debug: Log errors
+      // console.error("Error in updateMoM:", error); // Debug: Log errors
       return rejectWithValue(error.response?.data?.message || "Failed to update MoM");
     }
   }

@@ -18,7 +18,7 @@ import {
 import { ArrowLeft, Eye, Edit, Trash2, X } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 
-const AllTaskList = ({ projectId }) => {
+const AllTaskListByProjectId = ({ projectId }) => {
 
   const dispatch = useDispatch();
   const router = useRouter();
@@ -249,7 +249,7 @@ const AllTaskList = ({ projectId }) => {
   );
 };
 
-export default AllTaskList;
+export default AllTaskListByProjectId;
 
 
 

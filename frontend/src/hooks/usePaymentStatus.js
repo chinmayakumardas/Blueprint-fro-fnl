@@ -11,10 +11,10 @@ export const usePaymentStatus = (contactId ) => {
       dispatch(verifyStatusCode(contactId))
     }
   }, [contactId, dispatch])
-  console.log(paymentDetails)
+  // console.log(paymentDetails)
 
   const status = paymentDetails?.status?.toLowerCase?.() === 'paid' ? 'yes' : 'no'
-  console.log(paymentDetails)
-console.log("status",paymentDetails?.status?.toLowerCase?.() === 'paid' ? 'yes' : 'no')
+  // console.log(paymentDetails)
+// console.log("status",paymentDetails?.status?.toLowerCase?.() === 'paid' ? 'yes' : 'no')
   return status || "No Status found for Given ContactId!"
 }

@@ -1,53 +1,49 @@
-// "use client";
-
-// import { useCurrentUser } from "@/hooks/useCurrentUser";
-// // import CpcDashboard from "@/components/dashboard/dashboardcontainer/CpcDashboard";
-// // import EmployeeDashboard from "@/components/dashboard/dashboardcontainer/EmployeeDashboard";
-
-// export default function DashboardPage() {
-//   const { currentUser, loading, isCpc } = useCurrentUser();
-
-//   if (loading) {
-//     return <div className="p-8 font-semibold">Loading dashboard...</div>;
-//   }
-
-//   return (
-//     <div className="p-4">
-//       {/* {isCpc ? (
-//         <CpcDashboard currentUser={currentUser} />
-//       ) : (
-//         <EmployeeDashboard currentUser={currentUser} />
-//       )} */}
-      
-//     </div>
-//   );
-// }
-
-
 
 "use client";
-import { SectionCards } from "@/modules/dashboard/section-cards";
-import { ChartAreaInteractive } from "@/modules/dashboard/chart-area-interactive";
-import { DataTable } from "@/modules/dashboard/data-table";
 
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+
+import { ChartAreaInteractive } from "@/modules/dashboard/chartarea/cpc-chart-area";
+import ChartAreaInteractiveEmployee from "@/modules/dashboard/chartarea/employee-chart-area";
+import { DataTableEmployee } from "@/modules/dashboard/datatable/employee-data-table";
+import { DataTable } from "@/modules/dashboard/datatable/cpc-data-table";
+import { SectionCardCPC } from "@/modules/dashboard/sectioncard/Cpc-section-card";
+import { SectionCardEmployee } from "@/modules/dashboard/sectioncard/Employee-section-card";
 
 export default function Dashboard() {
 
 
+  const { currentUser, loading, isCpc } = useCurrentUser();
 
+  if (loading) {
+    return <div className="p-8 font-semibold">Loading dashboard...</div>;
+  }
 
-
+const employeeId= currentUser?.id  // Default to a specific employee ID if not available
 
   return (
-    <div className="space-y-6">
-  <SectionCards />
 
-  <div className="px-4 lg:px-6">
-    <ChartAreaInteractive />
-  </div>
-
-  <DataTable />
-</div>
+        <div className="p-4">
+      {isCpc ? (
+        <div className="space-y-6">
+          <SectionCardCPC />
+          <div className="px-4 lg:px-6">
+            <ChartAreaInteractive />
+          </div>
+          <DataTable />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <SectionCardEmployee employeeId={employeeId} />
+          <div className="px-4 lg:px-6">
+            <ChartAreaInteractiveEmployee employeeId={employeeId}/>
+          </div>
+          <DataTableEmployee employeeId={employeeId}/>
+        </div>
+      )}
+      
+    </div>
 
   );
 }
+

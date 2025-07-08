@@ -1,8 +1,4 @@
 
-
-
-
-
 "use client"
 
 import * as React from "react"
@@ -31,21 +27,23 @@ import {
 } from "@/components/ui/sidebar"
 import { useSelector } from "react-redux";
 
-// This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
+
+import { getSidebarForRole } from '@/constants/sidebarNavList';
+
+const role = 'employee' // This could come from Redux, Auth context, etc.
+const navMain2 = getSidebarForRole(role);
+
+
+export function AppSidebar({ ...props }) {
+   const  teams=[
     {
       name: "BluePrint",
       logo: GalleryVerticalEnd,
       plan: "Project Management",
     }
-  ],
-  navMain: [
+  ]
+// This is sample data.
+  const navMain= [
     {
       title: "Dashboard",
       url: "/dashboard",
@@ -107,32 +105,30 @@ const data = {
         { title: "Meeting Slots", url: "/master/slots" },
       ],
     },
-  ],
-}
+  ]
 
-export function AppSidebar({ ...props }) {
+
   const { employeeData } = useSelector((state) => state.user) || {};
   const userRole = employeeData?.designation;
 
   // Role-based filtering
- const navdata =
-  userRole === "cpc"||"CPC"
-    ? data.navMain
-    : data.navMain.filter((item) =>
+const navdata =
+  (userRole || "").toLowerCase() === "cpc"
+    ? navMain
+    : navMain.filter((item) =>
         ["Dashboard", "Project", "Task", "Team"].includes(item.title)
       );
 
+// console.log("Filtered navdata:", navdata);
   return (
     <Sidebar collapsible="icon" className="bg-[#0F1D41]" {...props}>
       <SidebarHeader className="bg-[#0F1D41] border-b border-[#374151]">
-        <TeamSwitcher teams={data.teams} />
+        <TeamSwitcher teams={teams} />
       </SidebarHeader>
       <SidebarContent className="bg-[#0F1D41]">
-        <NavMain items={navdata} />
+        <NavMain items={navMain2} />
       </SidebarContent>
-      {/* <SidebarFooter className="bg-[#0F1D41] border-t border-[#374151]">
-        <NavUser user={data.user} />
-      </SidebarFooter> */}
+      
       <SidebarRail />
     </Sidebar>
   );
