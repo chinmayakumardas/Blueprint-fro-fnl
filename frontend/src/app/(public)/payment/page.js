@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense } from 'react';
-import PaymentWithRedirect from "@/components/modules/payment/UserPaymentPage";
+import PaymentWithRedirect from "@/modules/payment/UserPaymentPage";
 import { LoaderCircle } from 'lucide-react';
 
 export default function Page() {

@@ -2,7 +2,9 @@
 
 "use client"
 
-import * as React from "react"
+import React from "react"
+import { useEffect, useState } from 'react';
+
 import { useDispatch, useSelector } from "react-redux"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 
@@ -31,7 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 // Redux actions
 import { fetchTasksByDeadline } from "@/store/features/dashboard/dashboardSlice";
-import {  fetchProjectsByEmployeeId} from "@/store/features/in-project/projectSlice";
+import {  fetchAllProjects} from "@/store/features/in-project/projectSlice";
 import { fetchAllTeams } from "@/store/features/in-project/teamSlice";
 
 export const description = "An interactive area chart for project statistics"
@@ -67,7 +69,7 @@ export function ChartAreaInteractive() {
   )
   const { allTeams = [], status: teamStatus } = useSelector((state) => state.team)
 
-  React.useEffect(() => {
+  useEffect(() => {
     dispatch(fetchTasksByDeadline())
     dispatch(fetchAllProjects())
     dispatch(fetchAllTeams())

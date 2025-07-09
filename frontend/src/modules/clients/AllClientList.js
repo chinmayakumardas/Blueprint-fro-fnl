@@ -18,13 +18,18 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import Laoder from "@/components/ui/loader";
+import OnboardingMode from "./OnboardingMode"; // Assuming this is the path to your OnboardingMode component
 export default function AllClientList() {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -37,6 +42,11 @@ export default function AllClientList() {
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(13);
+const [open, setOpen] = useState(false);
+
+  const handleOnboarding = () => setOpen(true);
+
+
 
   useEffect(() => {
     dispatch(fetchClients());
@@ -82,7 +92,8 @@ export default function AllClientList() {
 
   const handleEdit = (client) => router.push(`/client/edit/${client.clientId}`);
   const handleView = (client) => router.push(`/client/${client.clientId}`);
-  const handleOnboarding = () => router.push("/client/onboarding");
+  // const handleOnboarding = () => router.push("/client/onboarding");
+  // const handleOnboarding = () => router.push("/client/onboarding");
   const handleSort = (field) => {
     setSortField(field);
     setSortDirection(sortField === field && sortDirection === "asc" ? "desc" : "asc");
@@ -126,25 +137,6 @@ export default function AllClientList() {
     );
   }
 
-  // if (fetchClientsError) {
-  //   return (
-  //     <div className="container mx-auto px-4 py-4">
-  //       <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-4 rounded-lg shadow-sm">
-  //         <p className="font-semibold text-base mb-2">Unable to load clients</p>
-  //         <p className="text-green-600 text-sm">{fetchClientsError || "Please try again."}</p>
-  //         <Button
-  //           onClick={() => dispatch(fetchClients())}
-  //           className="mt-3 bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-  //         >
-  //           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-  //             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-  //           </svg>
-  //           Retry
-  //         </Button>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   return (
     <div className=" flex flex-col justify-around ">
@@ -241,6 +233,14 @@ export default function AllClientList() {
             </div>
           </div>
         </div>
+        {/* onbaording mode choose modal */}
+   <Dialog open={open} onOpenChange={setOpen}>
+  <DialogContent className="w-full max-w-xl p-0"> {/* no scroll or height here */}
+    <OnboardingMode /> {/* full control inside this */}
+  </DialogContent>
+</Dialog>
+
+
 
         {/* No Clients Message */}
         {sortedClients.length === 0 && (
@@ -265,7 +265,7 @@ export default function AllClientList() {
                 className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 px-4 py-2 rounded-lg text-sm"
               >
                 <Plus className="h-4 w-4" />
-                Create New Client
+             Onboard Client
               </Button>
             )}
           </div>

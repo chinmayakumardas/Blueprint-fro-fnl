@@ -126,7 +126,7 @@ const navdata =
         <TeamSwitcher teams={teams} />
       </SidebarHeader>
       <SidebarContent className="bg-[#0F1D41]">
-        <NavMain items={navMain2} />
+        <NavMain items={navMain} />
       </SidebarContent>
       
       <SidebarRail />

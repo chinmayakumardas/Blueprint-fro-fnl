@@ -15,9 +15,7 @@ export default function Dashboard() {
 
   const { currentUser, loading, isCpc } = useCurrentUser();
 
-  if (loading) {
-    return <div className="p-8 font-semibold">Loading dashboard...</div>;
-  }
+
 
 const employeeId= currentUser?.id  // Default to a specific employee ID if not available
 
