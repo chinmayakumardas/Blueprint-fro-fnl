@@ -14,8 +14,8 @@ import { toast } from "sonner"; // ✅ Call the toast method
 
 const LoginForm = () => {
   const [mode, setMode] = useState("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("chinmaya@aas.technology");
+  const [password, setPassword] = useState("Chin@2025");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState(Array(6).fill(""));
@@ -330,11 +330,10 @@ const LoginForm = () => {
         )}
 
         {mode === "otp" && (
-          <div className="flex flex-col justify-center items-center mb-6">
+          <div className=" mb-6">
+          {/* <div className="flex flex-col justify-center items-center mb-6"> */}
             <CardHeader className="mb-6 text-center relative">
-              <div className="absolute -top-2 -left-2 text-blue-500 animate-pulse">
-                <Shield size={32} className="drop-shadow-lg" />
-              </div>
+              
               <CardTitle className="text-3xl font-black bg-gradient-to-r from-blue-600 via-blue-600 to-blue-600 bg-clip-text text-transparent">
                  Security Check! 🔐
               </CardTitle>

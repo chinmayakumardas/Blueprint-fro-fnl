@@ -92,14 +92,3 @@ export const fullNav = [
 
 
 
-export const getSidebarForRole = (role) => {
-  return fullNav
-    .filter(item => item.roles.includes(role))
-    .map(item => {
-      if (item.items) {
-        const filteredSubItems = item.items.filter(sub => sub.roles.includes(role));
-        return { ...item, items: filteredSubItems };
-      }
-      return item;
-    });
-}
