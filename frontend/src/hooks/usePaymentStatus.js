@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { verifyStatusCode } from '@/store/features/meeting/paymentSlice'
+import { verifyStatusCode } from '@/features/meeting/paymentSlice'
 
 export const usePaymentStatus = (contactId ) => {
   const dispatch = useDispatch()

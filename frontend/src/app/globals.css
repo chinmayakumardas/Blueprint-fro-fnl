@@ -148,7 +148,7 @@
 
 
 /* too be deletd */
-@layer utilities {
+/* @layer utilities {
   .text-success {
     color: var(--success);
   }
@@ -244,4 +244,4 @@
   .hover\:bg-danger:hover {
     background-color: var(--danger);
   }
-}
+} */

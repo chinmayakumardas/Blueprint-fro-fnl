@@ -7,6 +7,9 @@ import sidebarReducer from '@/features/shared/sidebarSlice';
 
 import teamMembersReducer from '@/features/teamMembersSlice';
 import viewTeamByProjectIdReducer from '@/features/viewTeamByProjectIdSlice';
+//dashbaord & reports
+import dashboardReducer from '@/features/dashboard/dashboardSlice';
+import dashReducer from '@/features/dashboard/dashSlice';
 
 
 import projectReducer from '@/features/projectSlice';
@@ -18,7 +21,7 @@ import bugReducer from '@/features/bugSlice';
 import contactReducer from '@/features/contactSlice';
 import meetingReducer from '@/features/meetingSlice';
 import meetingCalendarReducer from '@/features/calender/meetingCalendarSlice';
-// import teamMeetingsReducer from '@/features/calender/teammeetingCalenderSlice';
+import teamMeetingsReducer from '@/features/calender/teammeetingCalenderSlice';
 import momReducer from '@/features/momSlice';
 import quotationReducer from '@/features/quotationSlice';
 import clientReducer from '@/features/clientSlice';
@@ -37,6 +40,11 @@ const store = configureStore({
   auth: authReducer,
   notifications: notificationReducer,
   user: userReducer,
+
+    //dashboard
+  dash: dashReducer,
+  dashboard:dashboardReducer,
+  
 
   // module reducer
  contact: contactReducer,
@@ -59,6 +67,7 @@ const store = configureStore({
   industries:industriesReducer,
 
 
+  teamMeetings:teamMeetingsReducer,
 
     teamMembers: teamMembersReducer,
   projectTeam: viewTeamByProjectIdReducer,

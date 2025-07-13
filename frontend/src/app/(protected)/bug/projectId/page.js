@@ -15,9 +15,7 @@ function ProjectBugListContent() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-semibold mb-4">
-        🪲 Bugs for Project ID: {projectId || "N/A"}
-      </h1>
+     
       <ProjectBugs projectId={projectId} />
     </div>
   );
