@@ -153,19 +153,22 @@ export default function AddClient() {
 
   return (
     <Card className="border border-gray-200 bg-white shadow-xl">
-      <CardHeader className="border-b border-gray-100">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={() => router.back()}
-            className="rounded-full text-gray-700 border border-gray-300 hover:bg-gray-100 px-3 py-1"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" /> Back
-          </Button>
-          <CardTitle className="text-xl font-semibold text-gray-800">Client Onboarding Form</CardTitle>
-          <div className="w-20" />
-        </div>
-      </CardHeader>
+    <CardHeader className="border-b border-gray-100">
+  <div className="flex items-center justify-between w-full">
+    <Button
+      variant="outline"
+      onClick={() => router.back()}
+      className="rounded-full text-gray-700 border border-gray-300 hover:bg-gray-100 px-3 py-1 flex-shrink-0"
+    >
+      <ArrowLeft className="h-4 w-4 mr-1" /> Back
+    </Button>
+    <CardTitle className="text-sm sm:text-xl font-semibold text-gray-800 flex-1 text-center">
+      Client Onboarding
+    </CardTitle>
+    <div className="w-20" />
+  </div>
+</CardHeader>
+
       <CardContent className="pt-8">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {["clientName", "industryType", "contactEmail", "contactNo", "contactPersonName", "website", "address"].map((name) => {

@@ -7,7 +7,7 @@ import {
   fetchProjectById,
   changeProjectStatus,
   resetSuccessMessage,
-} from "@/store/features/in-project/projectSlice";
+} from "@/features/projectSlice";
 import {
   FiArrowLeft,
   FiDownload,
@@ -26,7 +26,7 @@ import { useRouter } from "next/navigation";
 import ViewTeamByProjectId from "@/modules/team/viewTeamByProjectId";
 import CreateTeamForm from "@/modules/team/createTeam";
 import AllTaskListByProjectId from "@/modules/task/AllTaskListByProjectId";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -45,7 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useLoggedinUser } from "@/hooks/useLoggedinUser";
 
 export default function ViewProjectById({ projectId }) {
   const router = useRouter();
@@ -69,9 +69,12 @@ export default function ViewProjectById({ projectId }) {
     }
   }, [dispatch, projectId]);
 
-  const { currentUser, isTeamLead } = useCurrentUser(project?.data?.teamLeadId);
+  const { currentUser, isTeamLead } = useLoggedinUser(project?.data?.teamLeadId);
   console.log("isTeamLead", isTeamLead);
   console.log("currentUser:", currentUser);
+  console.log("currentUser:", currentUser);
+  console.log("currentUser:", project?.data?.teamLeadId,currentUser.employeeID
+);
 
   useEffect(() => {
     if (successMessage && !hasFetchedAfterStatusChange) {
@@ -145,7 +148,7 @@ export default function ViewProjectById({ projectId }) {
   ];
 
   // Determine if tasks and team tabs should be disabled
-  const isTasksTeamDisabled = currentUser?.role !== "cpc" && !isTeamLead;
+  const isTasksTeamDisabled = currentUser?.position !== "CPC" && !isTeamLead;
 
   if (status.fetchProject === "loading") {
     return (

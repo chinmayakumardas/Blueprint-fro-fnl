@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { FiSearch, FiBriefcase } from 'react-icons/fi';
-import { fetchClients } from '@/store/features/in-project/projectSlice'; // Correct import
+import { fetchClients } from '@/features/projectSlice'; // Correct import
 
 export default function ClientSelect({ value, onChange }) {
   const dispatch = useDispatch();

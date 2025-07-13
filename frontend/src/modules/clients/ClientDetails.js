@@ -1,6 +1,9 @@
+
+
+
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -14,46 +17,41 @@ import {
   Calendar,
   Briefcase,
   Users,
-  List,
   Info,
-  Clock,
   AlertCircle,
   CheckCircle,
+  Clock,
+  List,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 import {
   fetchClientById,
   fetchProjectsByClientId,
 } from "@/features/clientSlice";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Typography from "@/components/ui/typography";
 
 const statusConfig = {
   Planned: {
-    color: "bg-green-100 text-green-800 border-green-200",
+    color: "bg-warning text-warning-foreground",
     icon: <Clock className="w-4 h-4" />,
-    gradient: "from-green-50 to-green-100",
   },
   "In Progress": {
-    color: "bg-green-200 text-green-800 border-green-300",
+    color: "bg-info text-info-foreground",
     icon: <AlertCircle className="w-4 h-4" />,
-    gradient: "from-green-100 to-green-200",
   },
   Completed: {
-    color: "bg-green-300 text-green-900 border-green-400",
+    color: "bg-success text-success-foreground",
     icon: <CheckCircle className="w-4 h-4" />,
-    gradient: "from-green-200 to-green-300",
   },
 };
 
 export default function ClientDetails() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const params = useParams();
-  const clientId = params.id;
+  const { id: clientId } = useParams();
 
   const {
     formData = {},
@@ -62,8 +60,6 @@ export default function ClientDetails() {
     projects = [],
     fetchProjectsLoading: projectsLoading,
   } = useSelector((state) => state.client || {});
-
-  const [activeTab, setActiveTab] = useState("info");
 
   useEffect(() => {
     if (clientId) {
@@ -89,14 +85,11 @@ export default function ClientDetails() {
 
   if (loading || projectsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-green-50 p-4">
-        <div className="bg-white rounded-xl shadow-md p-8 text-center  w-full">
-          <div className="w-16 h-16 mb-6 mx-auto border-4 border-green-200 rounded-full animate-spin border-t-green-600"></div>
-          <Typography variant="h3" className="text-green-800 mb-2">
-            Loading Client Details
-          </Typography>
-          <Typography variant="p" className="text-gray-600">
-            Fetching the latest data, hang tight!
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="p-6 bg-card rounded-xl shadow border border-border text-center space-y-3">
+          <div className="w-10 h-10 border-4 border-muted rounded-full animate-spin border-t-primary mx-auto" />
+          <Typography variant="h3" className="text-muted-foreground">
+            Loading Client...
           </Typography>
         </div>
       </div>
@@ -105,23 +98,18 @@ export default function ClientDetails() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-green-50 p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 text-center  w-full border-l-4 border-red-500">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <AlertCircle className="w-8 h-8 text-red-500" />
-          </div>
-          <Typography variant="h3" className="text-gray-800 mb-3">
-            Unable to Load Client
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="p-6 bg-card rounded-xl border-l-4 border-danger shadow space-y-3 text-center">
+          <AlertCircle className="w-8 h-8 text-danger mx-auto" />
+          <Typography variant="h3" className="text-destructive">
+            Error loading client
           </Typography>
-          <Typography variant="p" className="text-gray-600 mb-6">
-            {error}
-          </Typography>
+          <Typography variant="p">{error}</Typography>
           <Button
             onClick={() => dispatch(fetchClientById(clientId))}
-            className="bg-green-700 hover:bg-green-800 text-white"
+            className="mt-2"
           >
-            <Info className="w-4 h-4 mr-2" />
-            Try Again
+            <Info className="w-4 h-4 mr-2" /> Try Again
           </Button>
         </div>
       </div>
@@ -129,196 +117,136 @@ export default function ClientDetails() {
   }
 
   return (
-    <Card className="border border-green-200 shadow-xl ">
-      <CardHeader className=" border-b border-green-200 ">
-       
-          {/* Top Header */}
-          <div className=" top-0 backdrop-blur-sm border-b border-gray-200 ">
-            <div className="container w-full  py-4  flex items-center justify-between">
-              <Button
-                         variant="back"
-                         size="sm"
-                         onClick={() => router.back()}
-                         className=""          >
-                         <ArrowLeft className="h-5 w-5 mr-2" />
-                         Back
-                       </Button>
-              
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
-                <Typography variant="small" className="text-gray-700">
-                  Live Sync
-                </Typography>
+    <div className="container max-w-screen-xl mx-auto px-4 py-8 space-y-6">
+      {/* Top Header */}
+      <div className="flex justify-between items-center mb-4">
+        <Button
+             variant="outline"
+             onClick={() => router.back()}
+             className="rounded-full text-gray-700 border border-gray-300 hover:bg-gray-100 px-3 py-1 flex-shrink-0"
+           >
+             <ArrowLeft className="h-4 w-4 mr-1" /> Back
+           </Button>
+    
+      </div>
+
+      {/* Main Split Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left: Client Info */}
+        <Card className="p-2 border border-border shadow-sm rounded-xl">
+          <CardHeader className="pb-0">
+            <Typography variant="h3" className="text-lg font-semibold">
+              Client Information
+            </Typography>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {clientFields.map(({ key, label, icon: Icon }) => (
+              <div key={key} className="flex items-start gap-3">
+                <div className="bg-muted p-2 rounded-md">
+                  <Icon className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <div>
+                  <Typography variant="small" className="text-muted-foreground">
+                    {label}
+                  </Typography>
+                  <Typography variant="p" className="text-foreground text-sm">
+                    {key === "website" && formData[key] ? (
+                      <a
+                        href={formData[key]}
+                        className="text-primary hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {formData[key]}
+                      </a>
+                    ) : (
+                      formData[key] || "Not provided"
+                    )}
+                  </Typography>
+                </div>
               </div>
-            </div>
-          </div>
+            ))}
 
-          {/* Main Content */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="py-6">
-            <TabsList className="grid grid-cols-2 max-w-md bg-green-50 rounded-lg p-1 mb-6">
-              <TabsTrigger
-                value="info"
-                className="rounded-md py-2 font-medium data-[state=active]:bg-green-700 data-[state=active]:text-white text-green-800"
-              >
-                Client Information
-              </TabsTrigger>
-              <TabsTrigger
-                value="projects"
-                className="rounded-md py-2 font-medium data-[state=active]:bg-green-700 data-[state=active]:text-white text-green-800"
-              >
-                Projects ({projects.length})
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="info">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  {clientFields.map(({ key, label, icon: Icon }) => (
+            {/* Attached Files */}
+            {formData.fileData?.length > 0 && (
+              <div className="pt-4">
+                <Typography variant="h4" className="mb-2">
+                  Attached Files ({formData.fileData.length})
+                </Typography>
+                <div className="space-y-2">
+                  {formData.fileData.map((file, idx) => (
                     <div
-                      key={key}
-                      className="flex items-center gap-4 p-3 rounded-lg hover:bg-green-50"
+                      key={idx}
+                      className="flex items-center justify-between bg-muted px-3 py-2 rounded-md"
                     >
-                      <div className="bg-green-100 p-2 rounded-full">
-                        <Icon className="text-green-700 w-4 h-4" />
-                      </div>
-                      <div className="flex-1">
-                        <Typography
-                          variant="small"
-                          className="text-gray-600 font-medium"
-                        >
-                          {label}
-                        </Typography>
-                        <Typography variant="p" className="text-black">
-                          {key === "website" && formData[key] ? (
-                            <a
-                              href={formData[key]}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-green-700 hover:underline"
-                            >
-                              {formData[key]}
-                            </a>
-                          ) : (
-                            formData[key] || "Not provided"
-                          )}
-                        </Typography>
-                      </div>
+                      <Typography variant="small" className="truncate">
+                        {file.name}
+                      </Typography>
+                      <Button asChild size="icon" variant="outline">
+                        <a href={file.downloadLink} target="_blank">
+                          <Download className="w-4 h-4" />
+                        </a>
+                      </Button>
                     </div>
                   ))}
                 </div>
-
-                {formData.fileData?.length > 0 && (
-                  <div className="space-y-4">
-                    <Typography
-                      variant="h3"
-                      className="flex items-center gap-2 text-black font-semibold"
-                    >
-                      <Download className="text-green-700" />
-                      Attached Files ({formData.fileData.length})
-                    </Typography>
-                    <div className="space-y-3">
-                      {formData.fileData.map((file, idx) => (
-                        <div
-                          key={idx}
-                          className="bg-green-50 rounded-lg p-3 hover:bg-green-100 transition"
-                        >
-                          <div className="flex items-center justify-between">
-                            <Typography
-                              variant="small"
-                              className="text-black truncate"
-                            >
-                              {file.name}
-                            </Typography>
-                            <Button
-                              asChild
-                              size="sm"
-                              className="bg-green-700 hover:bg-green-800 text-white"
-                            >
-                              <a
-                                href={file.downloadLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <Download className="w-4 h-4" />
-                              </a>
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
-            </TabsContent>
+            )}
+          </CardContent>
+        </Card>
 
-            <TabsContent value="projects">
-              {projects?.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {projects.map((project) => {
-                    const statusInfo =
-                      statusConfig[project.status] || statusConfig.Planned;
-                    return (
-                      <div
-                        key={project.projectId}
-                        className="cursor-pointer bg-white rounded-lg border border-gray-200  transition"
-                        onClick={() => handleProjectClick(project.projectId)}
-                      >
-                        <div
-                          className={`h-1 bg-gradient-to-r ${statusInfo.gradient}`}
-                        />
-                        <div className="p-4">
-                          <div className="flex items-start justify-between mb-3">
-                            <Typography
-                              variant="h4"
-                              className="font-semibold text-black"
-                            >
-                              {project.projectName}
-                            </Typography>
-                            <Badge
-                              className={`${statusInfo.color} flex items-center gap-1`}
-                            >
-                              {statusInfo.icon}
-                              <span className="text-xs">{project.status}</span>
-                            </Badge>
+        {/* Right: Projects */}
+        <Card className="p-2 border border-border shadow-sm rounded-xl">
+          <CardHeader className="pb-0">
+            <Typography variant="h3" className="text-lg font-semibold">
+              Recent Projects ({projects.length})
+            </Typography>
+          </CardHeader>
+          <CardContent>
+            {projects?.length > 0 ? (
+              <div className="space-y-2">
+                {projects.map((project) => {
+                  const status = statusConfig[project.status] || statusConfig.Planned;
+                  return (
+                    <div
+                      key={project.projectId}
+                      onClick={() => handleProjectClick(project.projectId)}
+                      className="cursor-pointer p-3 rounded-lg hover:bg-muted transition flex justify-between items-start border border-border"
+                    >
+                      <div>
+                        <Typography variant="h4" className="text-sm font-semibold">
+                          {project.projectName}
+                        </Typography>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <div>ID: {project.projectId}</div>
+                          <div>
+                            {project.startDate} → {project.endDate}
                           </div>
-                          <div className="space-y-1 text-sm text-gray-700">
-                            <div className="flex items-center gap-2">
-                              <Briefcase className="text-green-700" />
-                              <span>ID: {project.projectId}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="text-green-700" />
-                              <span>
-                                {project.startDate} → {project.endDate}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <User className="text-green-700" />
-                              <span>Lead: {project.teamLeadName}</span>
-                            </div>
-                          </div>
+                          <div>Lead: {project.teamLeadName}</div>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <List className="w-8 h-8 text-green-600" />
-                  </div>
-                  <Typography variant="h3" className="text-gray-700 mb-2">
-                    No Projects Found
-                  </Typography>
-                  <Typography variant="p" className="text-gray-500">
-                   {`This client doesn't have any associated projects yet.`}
-                  </Typography>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-     
-      </CardHeader>
-    </Card>
+                      <Badge className={`${status.color} text-xs flex items-center gap-1`}>
+                        {status.icon}
+                        {project.status}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-10">
+                <List className="w-8 h-8 mx-auto text-muted mb-2" />
+                <Typography variant="h4" className="text-muted-foreground">
+                  No Projects Found
+                </Typography>
+                <Typography variant="p" className="text-muted-foreground text-sm">
+                  This client has no associated projects yet.
+                </Typography>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

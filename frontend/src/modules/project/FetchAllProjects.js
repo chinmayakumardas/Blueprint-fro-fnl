@@ -440,20 +440,7 @@ useEffect(() => {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="border-t border-border">
-                <Button
-                  variant="link"
-                  className="w-full justify-between text-primary text-sm font-medium group-hover:text-primary-dark"
-                  onClick={() => handleViewProject(project.projectId)}
-                  aria-label={`View details for project ${project.projectName}`}
-                >
-                  View Project Details
-                  <FiChevronDown
-                    className="w-4 h-4 rotate-[-90deg] group-hover:translate-x-1 transition-transform"
-                    aria-hidden="true"
-                  />
-                </Button>
-              </CardFooter>
+             
             </Card>
           ))}
         </div>

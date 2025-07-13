@@ -5,6 +5,9 @@ import userReducer from '@/features/shared/userSlice';
 import sidebarReducer from '@/features/shared/sidebarSlice';
 
 
+import teamMembersReducer from '@/features/teamMembersSlice';
+import viewTeamByProjectIdReducer from '@/features/viewTeamByProjectIdSlice';
+
 
 import projectReducer from '@/features/projectSlice';
 import teamReducer from '@/features/teamSlice';
@@ -54,6 +57,11 @@ const store = configureStore({
   slots: slotReducer,
   services: serviceReducer,
   industries:industriesReducer,
+
+
+
+    teamMembers: teamMembersReducer,
+  projectTeam: viewTeamByProjectIdReducer,
   },
 })
 export default store;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { FiSearch, FiUser } from 'react-icons/fi';
-import { fetchTeamLeads } from '@/store/features/in-project/projectSlice';
+import { fetchTeamLeads } from '@/features/projectSlice';
 
 export default function TeamLeadSelect({ value, onChange, isOpen, onToggle, disabled }) {
   const dispatch = useDispatch();

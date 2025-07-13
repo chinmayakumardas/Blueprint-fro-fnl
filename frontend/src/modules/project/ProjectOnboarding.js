@@ -9,7 +9,7 @@ import { validateInput, sanitizeInput } from "@/utils/sanitize";
 import TeamLeadSelect from "@/modules/project/TeamLeadSelect";
 import ClientSelect from "@/modules/project/ClientSelect";
 import gsap from "gsap";
-import { toast } from "@/components/ui/sonner"; // Assumed to be react-hot-toast or similar
+import { toast } from "sonner"; // Assumed to be react-hot-toast or similar
 import {
   FiCalendar,
   FiUser,
@@ -29,7 +29,7 @@ import {
 import {
   createProject,
   resetProjectCreation,
-} from "@/store/features/in-project/projectSlice";
+} from "@/features/projectSlice";
 
 export default function ProjectOnboarding() {
   const router = useRouter();
@@ -605,3 +605,6 @@ export default function ProjectOnboarding() {
     </div>
   );
 }
+
+
+
