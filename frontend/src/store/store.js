@@ -6,7 +6,14 @@ import sidebarReducer from '@/features/shared/sidebarSlice';
 
 // module reducer
 import contactReducer from "@/features/contactSlice"
- const store = configureStore({
+ 
+
+//master table
+import slotReducer from '@/features/master/slotMasterSlice';
+import serviceReducer from '@/features/master/serviceMasterSlice';
+import industriesReducer from '@/features/master/industriesMasterSlice';
+
+const store = configureStore({
   reducer: {
     sidebar:sidebarReducer,
   //shared reducers
@@ -17,7 +24,10 @@ import contactReducer from "@/features/contactSlice"
   // module reducer
   contact:contactReducer,
 
-  
+  //master
+  slots: slotReducer,
+  services: serviceReducer,
+  industries:industriesReducer,
   },
 })
 export default store;

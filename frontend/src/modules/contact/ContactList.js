@@ -54,6 +54,7 @@ import {
   MessageSquare,
   Clock,
   Tag,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, isWithinInterval, parseISO } from "date-fns";
@@ -66,7 +67,7 @@ const ContactsList = () => {
   const dispatch = useDispatch();
   const { contacts, selectedContact, status, error } = useSelector((state) => state.contact);
 
-  // State for search, sort, filter, pagination, and status update
+  // State for search, sort, filter, pagination, and modals
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState("fullName");
   const [sortOrder, setSortOrder] = useState("asc");
@@ -74,14 +75,14 @@ const ContactsList = () => {
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [currentPage, setCurrentPage] = useState(1);
   const [contactsPerPage, setContactsPerPage] = useState(8);
-  const [goToPage, setGoToPage] = useState('');
+  const [goToPageError, setGoToPageError] = useState("");
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [newStatus, setNewStatus] = useState("");
   const [feedback, setFeedback] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-
 
   // Fetch contacts on component mount
   useEffect(() => {
@@ -95,33 +96,42 @@ const ContactsList = () => {
   };
 
   // Handle delete contact
-  const handleDeleteContact = (contactId) => {
-  setIsDeleting(true);
-  dispatch(deleteContact(contactId));
-};
+  const openDeleteModal = (contactId) => {
+    setSelectedContactId(contactId);
+    setIsDeleteModalOpen(true);
+  };
 
-
-useEffect(() => {
-  if (isDeleting) {
-    if (status === "succeeded") {
-      toast.success( "Contact deleted successfully.");
+  const handleDeleteContact = () => {
+    setIsDeleting(true);
+    dispatch(deleteContact(selectedContactId)).then((result) => {
       setIsDeleting(false);
-    } else if (status === "failed") {
-      toast.error( "Failed to delete contact.");
-      setIsDeleting(false);
-    }
-  }
-}, [status, error, isDeleting]);
-
+      setIsDeleteModalOpen(false);
+      if (result.meta.requestStatus === "fulfilled") {
+        toast.success("Contact deleted successfully.");
+        dispatch(getAllContacts()); 
+      } else {
+        toast.error("Failed to delete contact.");
+      }
+    });
+  };
 
   // Handle status update
   const handleStatusUpdate = () => {
     if (selectedContactId && newStatus) {
-      dispatch(updateContactStatus({ 
-        contactId: selectedContactId, 
-        status: newStatus,
-        feedback: feedback
-      }));
+      dispatch(
+        updateContactStatus({
+          contactId: selectedContactId,
+          status: newStatus,
+          feedback: feedback,
+        })
+      ).then((result) => {
+        if (result.meta.requestStatus === "fulfilled") {
+          toast.success("Status updated successfully.");
+          dispatch(getAllContacts()); 
+        } else {
+          toast.error("Failed to update status.");
+        }
+      });
       setIsStatusModalOpen(false);
       setNewStatus("");
       setFeedback("");
@@ -138,6 +148,11 @@ useEffect(() => {
   const closeViewModal = () => {
     setIsViewModalOpen(false);
     dispatch(clearSelectedContact());
+  };
+
+  // Reset date range
+  const resetDateRange = () => {
+    setDateRange({ from: null, to: null });
   };
 
   // Handle sort
@@ -218,54 +233,43 @@ useEffect(() => {
     return result;
   }, [contacts, searchTerm, sortField, sortOrder, filterStatus, dateRange]);
 
- // Pagination logic
+  // Pagination logic
+  const indexOfLastContact = currentPage * contactsPerPage;
+  const indexOfFirstContact = indexOfLastContact - contactsPerPage;
+  const currentContacts = filteredAndSortedContacts.slice(indexOfFirstContact, indexOfLastContact);
+  const totalPages = Math.ceil(filteredAndSortedContacts.length / contactsPerPage);
 
-const indexOfLastContact = currentPage * contactsPerPage;
-const indexOfFirstContact = indexOfLastContact - contactsPerPage;
-const currentContacts = filteredAndSortedContacts.slice(indexOfFirstContact, indexOfLastContact);
-const totalPages = Math.ceil(filteredAndSortedContacts.length / contactsPerPage);
   const handlePageChange = (pageNumber) => {
     if (pageNumber >= 1 && pageNumber <= totalPages) {
       setCurrentPage(pageNumber);
+      setGoToPageError("");
     }
   };
 
-  const handleGoToPage = (e) => {
-    e.preventDefault();
-    const page = parseInt(goToPage, 10);
-    if (!isNaN(page) && page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-      setGoToPage('');
-    } else {
-      toast.info( `Please enter a page number between 1 and ${totalPages}.`
-      
-      );
-    }
-  };
 
 
   return (
     <>
-      <Card className=" overflow-hidden">
-        <CardHeader className="">
-          <CardTitle className="text-3xl font-bold text-green-800 flex items-center">
-          All Contacts
+      <Card className="overflow-hidden">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold flex items-center">
+            All Contacts
           </CardTitle>
         </CardHeader>
-        <CardContent className="">
+        <CardContent>
           {/* Search and Filter Controls */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-green-600" />
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative w-full md:w-80">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-success" />
               <Input
                 placeholder="Search by name, email, company, etc..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-green-300 focus:ring-green-500 text-green-900 rounded-lg"
+                className="pl-10 border rounded-lg"
               />
             </div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full md:w-48 border-green-300 focus:ring-green-500 rounded-lg">
+              <SelectTrigger className="w-full md:w-48 border rounded-lg">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -275,99 +279,121 @@ const totalPages = Math.ceil(filteredAndSortedContacts.length / contactsPerPage)
                 <SelectItem value="Rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
-            <Popover>
-              <PopoverTrigger asChild>
+            <div className="relative">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="border text-foreground hover:bg-muted rounded-lg"
+                  >
+                    <Calendar className="h-5 w-5 mr-2 text-success" />
+                    {dateRange.from && dateRange.to
+                      ? `${format(dateRange.from, "PPP")} - ${format(dateRange.to, "PPP")}`
+                      : "Select Date Range"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <CalendarComponent
+                    mode="range"
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    initialFocus
+                    className="bg-card text-card-foreground"
+                  />
+                </PopoverContent>
+              </Popover>
+              {dateRange.from && (
                 <Button
-                  variant="outline"
-                  className="border-green-300 text-green-700 hover:bg-green-50 rounded-lg"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-danger hover:bg-muted"
+                  onClick={resetDateRange}
+                  title="Reset Date Range"
                 >
-                  <Calendar className="h-5 w-5 mr-2" />
-                  {dateRange.from && dateRange.to
-                    ? `${format(dateRange.from, "PPP")} - ${format(dateRange.to, "PPP")}`
-                    : "Select Date Range"}
+                  <X className="h-4 w-4" />
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <CalendarComponent
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={setDateRange}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+              )}
+            </div>
           </div>
 
           {/* Table */}
-          <div className="SJoverflow-x-auto rounded-lg border border-green-200">
+          <div className="overflow-x-auto rounded-lg border">
             <Table>
               <TableHeader>
-                <TableRow className="bg-green-50 hover:bg-green-100">
+                <TableRow className="bg-muted hover:bg-muted/80">
                   <TableHead
-                    className="cursor-pointer text-green-800 font-semibold"
+                    className="cursor-pointer font-semibold min-w-[100px]"
                     onClick={() => handleSort("contactId")}
                   >
                     Contact ID
-                    <ArrowUpDown className="inline ml-2 h-4 w-4" />
+                    <ArrowUpDown className="inline ml-2 h-4 w-4 text-success" />
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer text-green-800 font-semibold"
+                    className="cursor-pointer font-semibold min-w-[120px]"
                     onClick={() => handleSort("fullName")}
                   >
                     Full Name
-                    <ArrowUpDown className="inline ml-2 h-4 w-4" />
+                    <ArrowUpDown className="inline ml-2 h-4 w-4 text-success" />
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer text-green-800 font-semibold"
+                    className="cursor-pointer font-semibold min-w-[150px]"
                     onClick={() => handleSort("email")}
                   >
                     Email
-                    <ArrowUpDown className="inline ml-2 h-4 w-4" />
+                    <ArrowUpDown className="inline ml-2 h-4 w-4 text-success" />
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer text-green-800 font-semibold"
+                    className="cursor-pointer font-semibold min-w-[100px]"
                     onClick={() => handleSort("phone")}
                   >
                     Phone
-                    <ArrowUpDown className="inline ml-2 h-4 w-4" />
+                    <ArrowUpDown className="inline ml-2 h-4 w-4 text-success" />
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer text-green-800 font-semibold"
+                    className="cursor-pointer font-semibold min-w-[120px]"
                     onClick={() => handleSort("companyName")}
                   >
                     Company
-                    <ArrowUpDown className="inline ml-2 h-4 w-4" />
+                    <ArrowUpDown className="inline ml-2 h-4 w-4 text-success" />
                   </TableHead>
-                  <TableHead className="text-green-800 font-semibold">Status</TableHead>
+                  <TableHead className="font-semibold min-w-[100px]">Status</TableHead>
                   <TableHead
-                    className="cursor-pointer text-green-800 font-semibold"
+                    className="cursor-pointer font-semibold min-w-[120px]"
                     onClick={() => handleSort("createdAt")}
                   >
                     Inquiry Date
-                    <ArrowUpDown className="inline ml-2 h-4 w-4" />
+                    <ArrowUpDown className="inline ml-2 h-4 w-4 text-success" />
                   </TableHead>
-                  <TableHead className="text-green-800 font-semibold">Actions</TableHead>
+                  <TableHead className="font-semibold min-w-[120px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {status === "loading" ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-green-600 mx-auto" />
-                      <span className="text-green-700">Loading contacts...</span>
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="h-8 w-8 animate-spin text-success" />
+                        <span>Loading contacts...</span>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : currentContacts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8">
-                      <div className="text-green-700 text-lg">
-                        No contacts found matching your criteria.
+                    <TableCell colSpan={8} className="text-center py-12">
+                      <div className="flex flex-col items-center gap-3">
+                        <AlertCircle className="h-12 w-12 text-muted-foreground" />
+                        <span className="text-lg font-medium text-foreground">
+                          No contacts found matching your criteria.
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          Try adjusting your search or filters.
+                        </span>
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : (
-                   currentContacts.map((contact) => (
-                    <TableRow key={contact._id} className="hover:bg-green-50">
+                  currentContacts.map((contact) => (
+                    <TableRow key={contact._id} className="hover:bg-muted/50">
                       <TableCell className="whitespace-nowrap">{contact.contactId || "N/A"}</TableCell>
                       <TableCell className="whitespace-nowrap">{contact.fullName || "N/A"}</TableCell>
                       <TableCell className="whitespace-nowrap">{contact.email || "N/A"}</TableCell>
@@ -378,10 +404,10 @@ const totalPages = Math.ceil(filteredAndSortedContacts.length / contactsPerPage)
                           className={cn(
                             "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium",
                             contact.status === "Accepted"
-                              ? "bg-green-100 text-green-800"
+                              ? "bg-success text-success-foreground"
                               : contact.status === "Pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
+                              ? "bg-warning text-warning-foreground"
+                              : "bg-danger text-danger-foreground"
                           )}
                         >
                           {contact.status === "Accepted" ? (
@@ -404,16 +430,16 @@ const totalPages = Math.ceil(filteredAndSortedContacts.length / contactsPerPage)
                           <Button
                             variant="outline"
                             size="icon"
-                            className="border-green-500 text-green-700 hover:bg-green-100"
+                            className="border-success text-success  hover:bg-success hover:text-white"
                             onClick={() => handleViewContact(contact.contactId)}
                             title="View"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-4 w-4 " />
                           </Button>
                           <Button
                             variant="outline"
                             size="icon"
-                            className="border-green-500 text-green-700 hover:bg-green-100"
+                            className="border-info text-info hover:bg-info hover:text-white"
                             onClick={() => openStatusModal(contact.contactId)}
                             disabled={contact.status === "Accepted"}
                             title="Update Status"
@@ -421,15 +447,16 @@ const totalPages = Math.ceil(filteredAndSortedContacts.length / contactsPerPage)
                             <Tag className="h-4 w-4" />
                           </Button>
                           <Button
-                            variant="destructive"
+                            variant="outline"
                             size="icon"
-                            className="bg-red-600 hover:bg-red-700"
-                            onClick={() => handleDeleteContact(contact.contactId)}
+                            className="border-danger text-danger hover:bg-danger hover:text-white"
+                            onClick={() => openDeleteModal(contact.contactId)}
                             title="Delete"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
+                        
                       </TableCell>
                     </TableRow>
                   ))
@@ -439,96 +466,76 @@ const totalPages = Math.ceil(filteredAndSortedContacts.length / contactsPerPage)
           </div>
 
           {/* Pagination */}
-                   {totalPages > 1 && (
-                     <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4 mt-4">
-                       {/* Items per page selector */}
-                       <div className="flex items-center space-x-2">
-                         <Label htmlFor="contactsPerPage" className="text-green-700">Contacts per page:</Label>
-                         <Select
-                           value={contactsPerPage.toString()}
-                           onValueChange={(value) => setContactsPerPage(Number(value))}
-                         >
-                           <SelectTrigger className="w-24 border-green-400 focus:ring-green-500">
-                             <SelectValue />
-                           </SelectTrigger>
-                           <SelectContent>
-                             <SelectItem value="8">8</SelectItem>
-                             <SelectItem value="10">10</SelectItem>
-                             <SelectItem value="20">20</SelectItem>
-                           </SelectContent>
-                         </Select>
-                       </div>
-         
-                       {/* Pagination controls */}
-                       <div className="flex items-center space-x-2">
-                         <Button
-                           variant="outline"
-                           onClick={() => handlePageChange(currentPage - 1)}
-                           disabled={currentPage === 1}
-                           className="text-green-600 hover:bg-green-100"
-                         >
-                           Previous
-                         </Button>
-                         {[...Array(totalPages).keys()].map((page) => (
-                           <Button
-                             key={page + 1}
-                             variant={currentPage === page + 1 ? 'default' : 'outline'}
-                             onClick={() => handlePageChange(page + 1)}
-                             className={
-                               currentPage === page + 1
-                                 ? 'bg-green-600 text-white hover:bg-green-700'
-                                 : 'text-green-600 hover:bg-green-100'
-                             }
-                           >
-                             {page + 1}
-                           </Button>
-                         ))}
-                         <Button
-                           variant="outline"
-                           onClick={() => handlePageChange(currentPage + 1)}
-                           disabled={currentPage === totalPages}
-                           className="text-green-600 hover:bg-green-100"
-                         >
-                           Next
-                         </Button>
-                       </div>
-         
-                       {/* Go to page input */}
-                       <div className="flex items-center space-x-2">
-                         <Label htmlFor="goToPage" className="text-green-700">Go to page:</Label>
-                         <Input
-                           id="goToPage"
-                           type="number"
-                           value={goToPage}
-                           onChange={(e) => setGoToPage(e.target.value)}
-                           className="w-20 border-green-400 focus:ring-green-500"
-                           placeholder="Page"
-                         />
-                         <Button
-                           onClick={handleGoToPage}
-                           className="bg-green-600 hover:bg-green-700 text-white"
-                         >
-                           Go
-                         </Button>
-                       </div>
-                     </div>
-                   )}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4 mt-6">
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="contactsPerPage" className="text-foreground">Contacts per page:</Label>
+                <Select
+                  value={contactsPerPage.toString()}
+                  onValueChange={(value) => setContactsPerPage(Number(value))}
+                >
+                  <SelectTrigger className="w-24 border rounded-lg">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="8">8</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="text-primary hover:bg-primary hover:text-primary-foreground"
+                >
+                  Previous
+                </Button>
+                {[...Array(totalPages).keys()].map((page) => (
+                  <Button
+                    key={page + 1}
+                    variant={currentPage === page + 1 ? "default" : "outline"}
+                    onClick={() => handlePageChange(page + 1)}
+                    className={
+                      currentPage === page + 1
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                        : "text-primary hover:bg-primary hover:text-primary-foreground"
+                    }
+                  >
+                    {page + 1}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="text-primary hover:bg-primary hover:text-primary-foreground"
+                >
+                  Next
+                </Button>
+              </div>
+             
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* View Contact Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={closeViewModal}>
-        <DialogContent className="border-green-300 bg-green-50 max-w-2xl rounded-2xl shadow-xl cursor-pointer">
-          <DialogHeader className="bg-green-100 p-4 rounded-t-2xl">
-            <DialogTitle className="text-green-800 text-2xl font-bold flex items-center">
-              <User className="h-6 w-6 mr-2" />
+        <DialogContent className="max-w-full sm:max-w-4xl max-h-[85vh] overflow-y-auto rounded-lg">
+          <DialogHeader className="bg-muted p-4 rounded-t-lg">
+            <DialogTitle className="text-2xl font-bold flex items-center">
+              <User className="h-6 w-6 mr-2 text-success" />
               Contact Details
             </DialogTitle>
           </DialogHeader>
           {status === "loading" && !selectedContact ? (
-            <div className="text-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-green-600 mx-auto" />
-              <span className="text-green-700">Loading contact details...</span>
+            <div className="flex flex-col items-center py-8">
+                
+              <Loader2 className="h-8 w-8 animate-spin text-success" />
+              <span>Loading contact details...</span>
             </div>
           ) : error && !selectedContact ? (
             <Alert variant="destructive" className="m-4">
@@ -537,92 +544,92 @@ const totalPages = Math.ceil(filteredAndSortedContacts.length / contactsPerPage)
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           ) : selectedContact ? (
-            <div className="space-y-4 text-green-900 p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 p-6">
               <div className="flex items-center">
-                <Tag className="h-5 w-5 mr-2 text-green-600" />
+                <Tag className="h-5 w-5 mr-2 text-success" />
                 <p>
                   <strong>Contact ID:</strong> {selectedContact.contactId || "N/A"}
                 </p>
               </div>
               <div className="flex items-center">
-                <User className="h-5 w-5 mr-2 text-green-600" />
+                <User className="h-5 w-5 mr-2 text-success" />
                 <p>
                   <strong>Full Name:</strong> {selectedContact.fullName || "N/A"}
                 </p>
               </div>
               <div className="flex items-center">
-                <Mail className="h-5 w-5 mr-2 text-green-600" />
+                <Mail className="h-5 w-5 mr-2 text-success" />
                 <p>
                   <strong>Email:</strong> {selectedContact.email || "N/A"}
                 </p>
               </div>
               <div className="flex items-center">
-                <Phone className="h-5 w-5 mr-2 text-green-600" />
+                <Phone className="h-5 w-5 mr-2 text-success" />
                 <p>
                   <strong>Phone:</strong> {selectedContact.phone || "N/A"}
                 </p>
               </div>
               <div className="flex items-center">
-                <Building className="h-5 w-5 mr-2 text-green-600" />
+                <Building className="h-5 w-5 mr-2 text-success" />
                 <p>
                   <strong>Company:</strong> {selectedContact.companyName || "N/A"}
                 </p>
               </div>
               <div className="flex items-center">
-                <Briefcase className="h-5 w-5 mr-2 text-green-600" />
+                <Briefcase className="h-5 w-5 mr-2 text-success" />
                 <p>
                   <strong>Designation:</strong> {selectedContact.designation || "N/A"}
                 </p>
               </div>
               <div className="flex items-center">
-                <Building className="h-5 w-5 mr-2 text-green-600" />
+                <Building className="h-5 w-5 mr-2 text-success" />
                 <p>
                   <strong>Industry:</strong> {selectedContact.industry || "N/A"}
                 </p>
               </div>
               <div className="flex items-center">
-                <MapPin className="h-5 w-5 mr-2 text-green-600" />
+                <MapPin className="h-5 w-5 mr-2 text-success" />
                 <p>
                   <strong>Location:</strong> {selectedContact.location || "N/A"}
                 </p>
               </div>
               <div className="flex items-center">
-                <Tag className="h-5 w-5 mr-2 text-green-600" />
+                <Tag className="h-5 w-5 mr-2 text-success" />
                 <p>
                   <strong>Service Interest:</strong>{" "}
                   {selectedContact.serviceInterest?.join(", ") || "N/A"}
                 </p>
               </div>
               <div className="flex items-center">
-                <MessageSquare className="h-5 w-5 mr-2 text-green-600" />
+                <MessageSquare className="h-5 w-5 mr-2 text-success" />
                 <p>
                   <strong>Referral Source:</strong> {selectedContact.referralSource || "N/A"}
                 </p>
               </div>
               <div className="flex items-center">
-                <MessageSquare className="h-5 w-5 mr-2 text-green-600" />
+                <MessageSquare className="h-5 w-5 mr-2 text-success" />
                 <p>
                   <strong>Message:</strong> {selectedContact.message || "N/A"}
                 </p>
               </div>
               <div className="flex items-center">
-                <MessageSquare className="h-5 w-5 mr-2 text-green-600" />
+                <MessageSquare className="h-5 w-5 mr-2 text-success" />
                 <p>
                   <strong>Feedback:</strong> {selectedContact.feedback || "Feedback not provided"}
                 </p>
               </div>
               <div className="flex items-center">
-                <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+                <CheckCircle className="h-5 w-5 mr-2 text-success" />
                 <p>
                   <strong>Status:</strong>{" "}
                   <span
                     className={cn(
                       "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium",
                       selectedContact.status === "Accepted"
-                        ? "bg-green-100 text-green-800"
+                        ? "bg-success text-success-foreground"
                         : selectedContact.status === "Pending"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
+                        ? "bg-warning text-warning-foreground"
+                        : "bg-danger text-danger-foreground"
                     )}
                   >
                     {selectedContact.status === "Accepted" ? (
@@ -636,39 +643,21 @@ const totalPages = Math.ceil(filteredAndSortedContacts.length / contactsPerPage)
                   </span>
                 </p>
               </div>
-              <div className="flex items-center">
-                <Clock className="h-5 w-5 mr-2 text-green-600" />
-                <p>
-                  <strong>Created At:</strong>{" "}
-                  {selectedContact.createdAt
-                    ? format(parseISO(selectedContact.createdAt), "PPP")
-                    : "N/A"}
-                </p>
-              </div>
-              <div className="flex items-center">
-                <Clock className="h-5 w-5 mr-2 text-green-600" />
-                <p>
-                  <strong>Updated At:</strong>{" "}
-                  {selectedContact.updatedAt
-                    ? format(parseISO(selectedContact.updatedAt), "PPP")
-                    : "N/A"}
-                </p>
-              </div>
               
+            
             </div>
           ) : (
-            <div className="text-green-700 text-lg p-6">No contact selected.</div>
+            <div className="text-lg p-6 text-center">No contact selected.</div>
           )}
-         
         </DialogContent>
       </Dialog>
 
       {/* Update Status Modal */}
       <Dialog open={isStatusModalOpen} onOpenChange={() => setIsStatusModalOpen(false)}>
-        <DialogContent className="border-green-300 bg-green-50 rounded-2xl">
-          <DialogHeader className="bg-green-100 p-4 rounded-t-2xl">
-            <DialogTitle className="text-green-800 text-xl font-bold flex items-center">
-              <Tag className="h-5 w-5 mr-2" />
+        <DialogContent className="max-w-full sm:max-w-md rounded-lg">
+          <DialogHeader className="bg-muted p-4 rounded-t-lg">
+            <DialogTitle className="text-xl font-bold flex items-center">
+              <Tag className="h-5 w-5 mr-2 text-success" />
               Update Contact Status
             </DialogTitle>
           </DialogHeader>
@@ -681,7 +670,7 @@ const totalPages = Math.ceil(filteredAndSortedContacts.length / contactsPerPage)
           )}
           <div className="p-4 space-y-4">
             <Select onValueChange={setNewStatus} value={newStatus}>
-              <SelectTrigger className="border-green-500 focus:ring-green-500 text-green-900 rounded-lg">
+              <SelectTrigger className="border rounded-lg">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
@@ -690,32 +679,62 @@ const totalPages = Math.ceil(filteredAndSortedContacts.length / contactsPerPage)
               </SelectContent>
             </Select>
             <div className="space-y-2">
-              <label className="text-green-800 font-semibold flex items-center">
-                <MessageSquare className="h-5 w-5 mr-2" />
+              <label className="font-semibold flex items-center">
+                <MessageSquare className="h-5 w-5 mr-2 text-success" />
                 Feedback
               </label>
               <Input
                 placeholder="Enter feedback..."
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
-                className="border-green-500 focus:ring-green-500 text-green-900 rounded-lg"
+                className="border rounded-lg"
               />
             </div>
             <Button
-              className="bg-green-600 text-white hover:bg-green-700 w-full"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 w-full"
               onClick={handleStatusUpdate}
               disabled={!newStatus}
             >
               Submit
             </Button>
           </div>
-          <DialogFooter className="p-4">
+
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={() => setIsDeleteModalOpen(false)}>
+        <DialogContent className="max-w-full sm:max-w-md rounded-lg">
+          <DialogHeader className="bg-muted p-4 rounded-t-lg">
+            <DialogTitle className="text-xl font-bold flex items-center">
+              <Trash2 className="h-5 w-5 mr-2 text-danger" />
+              Confirm Deletion
+            </DialogTitle>
+          </DialogHeader>
+          <div className="p-4">
+            <p className="text-foreground">
+              Are you sure you want to delete this contact? This action cannot be undone.
+            </p>
+          </div>
+          <DialogFooter className="p-4 flex flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
-              className="border-green-500 text-green-700 hover:bg-green-100"
-              onClick={() => setIsStatusModalOpen(false)}
+              className="border text-foreground hover:bg-muted"
+              onClick={() => setIsDeleteModalOpen(false)}
             >
               Cancel
+            </Button>
+            <Button
+              className="bg-danger text-danger-foreground hover:bg-danger/90"
+              onClick={handleDeleteContact}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -725,7 +744,3 @@ const totalPages = Math.ceil(filteredAndSortedContacts.length / contactsPerPage)
 };
 
 export default ContactsList;
-
-
-
-
