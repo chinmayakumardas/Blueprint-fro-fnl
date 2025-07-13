@@ -4,9 +4,23 @@ import notificationReducer from '@/features/shared/notificationSlice';
 import userReducer from '@/features/shared/userSlice';
 import sidebarReducer from '@/features/shared/sidebarSlice';
 
+
+
+import projectReducer from '@/features/projectSlice';
+import teamReducer from '@/features/teamSlice';
+import taskReducer from '@/features/taskSlice';
+import bugReducer from '@/features/bugSlice';
+
 // module reducer
-import contactReducer from "@/features/contactSlice"
- 
+import contactReducer from '@/features/contactSlice';
+import meetingReducer from '@/features/meetingSlice';
+import meetingCalendarReducer from '@/features/calender/meetingCalendarSlice';
+// import teamMeetingsReducer from '@/features/calender/teammeetingCalenderSlice';
+import momReducer from '@/features/momSlice';
+import quotationReducer from '@/features/quotationSlice';
+import clientReducer from '@/features/clientSlice';
+import paymentReducer from '@/features/meeting/paymentSlice'
+import causeReducer from '@/features/causeSlice';
 
 //master table
 import slotReducer from '@/features/master/slotMasterSlice';
@@ -22,7 +36,19 @@ const store = configureStore({
   user: userReducer,
 
   // module reducer
-  contact:contactReducer,
+ contact: contactReducer,
+  meetings: meetingReducer,
+  meetingCalendar: meetingCalendarReducer,
+  mom: momReducer,
+  quotation : quotationReducer,
+  client:clientReducer,
+  project:projectReducer,
+  task:taskReducer,
+  team: teamReducer,
+  bugs: bugReducer,
+  cause: causeReducer,
+
+  payment: paymentReducer,
 
   //master
   slots: slotReducer,
