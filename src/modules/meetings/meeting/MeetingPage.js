@@ -1032,7 +1032,7 @@ const handleCreate = async (newMeeting) => {
             </DialogContent>
           </Dialog>
           <Dialog open={modalState === 'viewMom'} onOpenChange={(open) => setModalState(open ? 'viewMom' : null)}>
-            <DialogContent className="w-[70vw] h-[90vh] max-w-none p-6 overflow-y-auto">
+            <DialogContent className="min-w-[60vw] h-[90vh] max-w-7xl p-6 overflow-y-auto">
               <MeetingDetailsWithMOM
                 isOpen={modalState === 'viewMom'}
                 onClose={handleCloseModals}

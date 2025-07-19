@@ -1,13 +1,11 @@
 
 
 
-
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAllProjects, clearProjects } from '@/features/projectSlice'; // Corrected import
+import { fetchAllProjects, clearProjects, deleteProject } from '@/features/projectSlice';
 import { useRouter } from 'next/navigation';
 import {
   FiPaperclip,
@@ -15,7 +13,6 @@ import {
   FiCheckCircle,
   FiClock,
   FiAlertCircle,
-  FiEye,
   FiPlus,
   FiSearch,
   FiFilter,
@@ -23,6 +20,7 @@ import {
   FiArrowUp,
   FiArrowDown,
   FiX,
+  FiTrash2, // Added delete icon
 } from 'react-icons/fi';
 import { Briefcase } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
@@ -37,6 +35,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'; // Added Dialog components for confirmation modal
 
 const statusColors = {
   Planned: 'bg-amber-100 text-amber-800 border-amber-200',
@@ -59,21 +66,19 @@ const progressColors = {
 export default function FetchAllProjects() {
   const dispatch = useDispatch();
   const router = useRouter();
-  const { projects, status, error } = useSelector((state) => state.project); // Corrected selector
+  const { projects, status, error, successMessage } = useSelector((state) => state.project);
 
-  // State for filters and sorting
+  // State for filters, sorting, and modal
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [sortField, setSortField] = useState('null');
   const [sortDirection, setSortDirection] = useState('asc');
+  const [deleteProjectId, setDeleteProjectId] = useState(null); // Track project to delete
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // Modal state
 
-
-  
-useEffect(() => {
-  
+  useEffect(() => {
     dispatch(fetchAllProjects());
-  
-}, [dispatch]);
+  }, [dispatch]);
 
   // Calculate project statistics
   const projectStats = projects
@@ -85,74 +90,43 @@ useEffect(() => {
       }
     : { total: 0, planned: 0, inProgress: 0, completed: 0 };
 
-  // Filter and sort projects
-  // const filteredAndSortedProjects = () => {
-  //   if (!Array.isArray(projects)) return []; // Early check for null/undefined
+  const filteredAndSortedProjects = () => {
+    if (!Array.isArray(projects)) return [];
 
-  //   let filtered = projects;
+    let filtered = projects;
 
-  //   if (selectedStatus !== 'all') {
-  //     filtered = filtered.filter((project) => project.status === selectedStatus);
-  //   }
+    // Filter by status
+    if (selectedStatus !== 'all') {
+      filtered = filtered.filter((project) => project.status === selectedStatus);
+    }
 
-  //   if (searchTerm.trim() !== '') {
-  //     const term = searchTerm.toLowerCase();
-  //     filtered = filtered.filter(
-  //       (project) =>
-  //         (project.projectName?.toLowerCase()?.includes(term) || false) ||
-  //         (project.teamLeadName?.toLowerCase()?.includes(term) || false) ||
-  //         (project.projectId?.toString()?.includes(term) || false)
-  //     );
-  //   }
+    // Filter by search
+    if (searchTerm.trim() !== '') {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (project) =>
+          (project.projectName?.toLowerCase()?.includes(term) || false) ||
+          (project.teamLeadName?.toLowerCase()?.includes(term) || false) ||
+          (project.projectId?.toString()?.includes(term) || false)
+      );
+    }
 
-  //   return [...filtered].sort((a, b) => {
-  //     const fieldA = (a[sortField] || '').toString().toLowerCase();
-  //     const fieldB = (b[sortField] || '').toString().toLowerCase();
+    // Sort if sortField is set
+    if (sortField !== 'null') {
+      return [...filtered].sort((a, b) => {
+        const fieldA = (a[sortField] || '').toString().toLowerCase();
+        const fieldB = (b[sortField] || '').toString().toLowerCase();
 
-  //     if (sortDirection === 'asc') {
-  //       return fieldA < fieldB ? -1 : fieldA > fieldB ? 1 : 0;
-  //     } else {
-  //       return fieldA > fieldB ? -1 : fieldA < fieldB ? 1 : 0;
-  //     }
-  //   });
-  // };
-const filteredAndSortedProjects = () => {
-  if (!Array.isArray(projects)) return [];
+        if (sortDirection === 'asc') {
+          return fieldA < fieldB ? -1 : fieldA > fieldB ? 1 : 0;
+        } else {
+          return fieldA > fieldB ? -1 : fieldA < fieldB ? 1 : 0;
+        }
+      });
+    }
 
-  let filtered = projects;
-
-  // Filter by status
-  if (selectedStatus !== 'all') {
-    filtered = filtered.filter((project) => project.status === selectedStatus);
-  }
-
-  // Filter by search
-  if (searchTerm.trim() !== '') {
-    const term = searchTerm.toLowerCase();
-    filtered = filtered.filter(
-      (project) =>
-        (project.projectName?.toLowerCase()?.includes(term) || false) ||
-        (project.teamLeadName?.toLowerCase()?.includes(term) || false) ||
-        (project.projectId?.toString()?.includes(term) || false)
-    );
-  }
-
-  // 🛠️ Only sort if the user manually changed sortField
-  if (sortField !== null) {
-    return [...filtered].sort((a, b) => {
-      const fieldA = (a[sortField] || '').toString().toLowerCase();
-      const fieldB = (b[sortField] || '').toString().toLowerCase();
-
-      if (sortDirection === 'asc') {
-        return fieldA < fieldB ? -1 : fieldA > fieldB ? 1 : 0;
-      } else {
-        return fieldA > fieldB ? -1 : fieldA < fieldB ? 1 : 0;
-      }
-    });
-  }
-
-  return filtered; // ← Return original (backend) order if no sort
-};
+    return filtered;
+  };
 
   const sortedProjects = filteredAndSortedProjects();
 
@@ -184,6 +158,21 @@ const filteredAndSortedProjects = () => {
     setSortDirection('asc');
   };
 
+  // Handle delete project
+  const handleDeleteProject = (projectId) => {
+    setDeleteProjectId(projectId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteProject = async () => {
+    if (deleteProjectId) {
+      await dispatch(deleteProject(deleteProjectId));
+        dispatch(fetchAllProjects());
+      setIsDeleteModalOpen(false);
+      setDeleteProjectId(null);
+    }
+  };
+
   if (status.fetchAllProjects === 'loading') {
     return (
       <div className="container mx-auto flex justify-center items-center h-64">
@@ -198,7 +187,7 @@ const filteredAndSortedProjects = () => {
   if (status.fetchAllProjects === 'failed') {
     return (
       <div className="container mx-auto">
-        <Card className="bg-destructive/10 border-destructive/20 text-destructive1 p-6 mx-auto">
+        <Card className="bg-destructive/10 border-destructive/20 text-destructive p-6 mx-auto">
           <CardHeader>
             <h3 className="text-lg font-semibold">Unable to load projects</h3>
           </CardHeader>
@@ -237,17 +226,16 @@ const filteredAndSortedProjects = () => {
   return (
     <div className="mx-auto min-h-screen">
       {/* Header */}
-      <div className="text-green-700 border-b border-border">
+      <div className="text-green-700 border-b border-border overflow-x-auto">
         <div className="mx-auto py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Briefcase className="w-8 h-8 text-green-700" />
               <h1 className="text-2xl sm:text-3xl font-bold text-green-700">All Projects</h1>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
               {/* Search Input */}
-              <div className="relative w-full sm:w-64 md:w-80">
+              <div className="relative w-full sm:w-64 md:w-60">
                 <FiSearch
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
                   aria-hidden="true"
@@ -346,7 +334,7 @@ const filteredAndSortedProjects = () => {
                       <span>Status</span>
                       {sortField === 'status' &&
                         (sortDirection === 'asc' ? (
-                          <FiArrowUp className="ml-2" aria-hidden="true" />
+                          <FiArrowUp className="ml acidic-2" aria-hidden="true" />
                         ) : (
                           <FiArrowDown className="ml-2" aria-hidden="true" />
                         ))}
@@ -372,6 +360,35 @@ const filteredAndSortedProjects = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Project Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this project?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteModalOpen(false)}
+              aria-label="Cancel project deletion"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteProject}
+              disabled={status.deleteProject === 'loading'}
+              aria-label="Confirm project deletion"
+            >
+              {status.deleteProject === 'loading' ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Projects Grid */}
       {sortedProjects.length === 0 ? (
@@ -417,14 +434,14 @@ const filteredAndSortedProjects = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="hover:bg-muted rounded-full"
+                    className="hover:bg-destructive/10 rounded-full"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleViewProject(project.projectId);
+                      handleDeleteProject(project.projectId);
                     }}
-                    aria-label={`View project ${project.projectName}`}
+                    aria-label={`Delete project ${project.projectName}`}
                   >
-                    <FiEye className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
+                    <FiTrash2 className="w-5 h-5 text-destructive group-hover:text-destructive-dark" />
                   </Button>
                 </div>
 
@@ -477,7 +494,7 @@ const filteredAndSortedProjects = () => {
                   </div>
                 </div>
               </CardContent>
-             <CardFooter className="border-t border-border">
+              <CardFooter className="border-t border-border">
                 <Button
                   variant="link"
                   className="w-full justify-between text-primary text-sm font-medium group-hover:text-primary-dark"

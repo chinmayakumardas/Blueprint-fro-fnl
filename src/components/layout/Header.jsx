@@ -21,7 +21,7 @@ export default function Header() {
         <div className=" border border-border backdrop-blur-md rounded-[25px] px-6 py-4 flex items-center justify-between shadow-sm">
           <div className="text-2xl font-bold text-blue-700 tracking-wide">BluePrint</div>
           <div className="flex items-center gap-4">
-            {mounted && (
+            {/* {mounted && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -30,7 +30,7 @@ export default function Header() {
               >
                 {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
               </Button>
-            )}
+            )} */}
             <Button className="bg-gradient-to-r from-blue-600 via-blue-600 to-blue-600" onClick={() => router.push("/login")}>Login</Button>
           </div>
         </div>

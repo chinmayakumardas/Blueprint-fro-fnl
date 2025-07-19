@@ -25,8 +25,8 @@ const CreateTaskForm = ({ project_id, projectName, teamId, project }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log('project prop:', project);
-    console.log('project.data.teamDetails:', project?.data?.teamDetails);
+    // console.log('project prop:', project);
+    // console.log('project.data.teamDetails:', project?.data?.teamDetails);
 
     const teamDetails = project?.data?.teamDetails || [];
     const filteredTeams = teamDetails
@@ -36,13 +36,13 @@ const CreateTaskForm = ({ project_id, projectName, teamId, project }) => {
         teamLeadName: team.teamLeadName,
       }));
 
-    console.log('Filtered teams:', filteredTeams);
+    // console.log('Filtered teams:', filteredTeams);
 
     setTeams(filteredTeams);
     setIsLoading(false);
   }, [project]);
 
-  console.log('all team list', teams);
+  // console.log('all team list', teams);
 
   const dispatch = useDispatch();
   const router = useRouter();
@@ -92,7 +92,7 @@ const CreateTaskForm = ({ project_id, projectName, teamId, project }) => {
   };
 
   const handleSelectChange = (name) => (selectedOption) => {
-    console.log('Selected team:', selectedOption);
+    // console.log('Selected team:', selectedOption);
     setFormData((prev) => ({
       ...prev,
       [name]: selectedOption?.value || '',

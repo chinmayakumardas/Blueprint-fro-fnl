@@ -40,10 +40,3 @@ export const axiosInstancePublic = axios.create({
   },
 })
 
-// 5️⃣ Instance 5 - /upload or /file
-// export const axiosInstance5 = axios.create({
-//   baseURL: `${BASE_ROOT}/upload`,
-//   headers: {
-//     'Content-Type': 'multipart/form-data',
-//   },
-// })

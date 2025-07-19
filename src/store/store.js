@@ -34,6 +34,16 @@ import slotReducer from '@/features/master/slotMasterSlice';
 import serviceReducer from '@/features/master/serviceMasterSlice';
 import industriesReducer from '@/features/master/industriesMasterSlice';
 
+
+
+//meetings
+
+import projectTeamMeetingReducer from "@/features/projectteammeetingSlice"
+import projectMeetingsReducer from "@/features/projetMeetingSlice"
+
+
+import projectMeetReducer from "@/features/projectmeetSlice"
+
 const store = configureStore({
   reducer: {
     sidebar:sidebarReducer,
@@ -72,6 +82,16 @@ const store = configureStore({
 teammeetingMom:teammeetingMomReducer,
     teamMembers: teamMembersReducer,
   projectTeam: viewTeamByProjectIdReducer,
+
+  projectTeamMeeting: projectTeamMeetingReducer,
+  projectMeetings:projectMeetingsReducer,
+
+
+
+
+  //project meeting
+  projectMeet:projectMeetReducer
+  
   },
 })
 export default store;

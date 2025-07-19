@@ -1,154 +1,259 @@
-// components/ProjectWiseTeamMeet.js
 
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchTeamByProjectId } from '@/features/viewTeamByProjectIdSlice';
-import { fetchTeamMembers } from '@/features/teamMembersSlice';
-import { fetchMeetingsByTeamId, createMeeting, updateMeeting } from '@/features/meetingSlice';
-import TeamMeetingCreateForm from './TeamMeetingCreateForm';
-import { Button } from '@/components/ui/button';
-import { FiCalendar, FiEdit2, FiPlus, FiUsers } from 'react-icons/fi';
-import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Eye,
+  CalendarDays,
+  Clock,
+  Users,
+  Video,
+  FileText,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchAllProjectMeetings } from "@/features/projectmeetSlice";
+import Spinner from "@/components/loader/Spinner";
+import ProjectWiseTeamMeetMOMDetails from "./ProjectWiseTeamMeetMOMDetails";
 
-const ProjectWiseTeamMeet = ({ projectId="AAS-IT-WEB-001" }) => {
+const ProjectWiseTeamMeet = ({ project }) => {
   const dispatch = useDispatch();
-  const { teams } = useSelector((state) => state.projectTeam);
-  const { meetings=[], status: meetingStatus } = useSelector((state) => state.meeting);
+  const projectId = project?.projectId;
+  const { meetings, loading, error } = useSelector((state) => state.projectMeet);
 
-  const [selectedTeam, setSelectedTeam] = useState(null);
-  const [showMeetingForm, setShowMeetingForm] = useState(false);
-  const [editMeeting, setEditMeeting] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [selectedMoMMeeting, setSelectedMoMMeeting] = useState(null);
+  const meetingsPerPage = 10;
 
+  // Fetch meetings when projectId changes
   useEffect(() => {
     if (projectId) {
-      dispatch(fetchTeamByProjectId(projectId));
+      dispatch(fetchAllProjectMeetings(projectId));
     }
   }, [dispatch, projectId]);
 
+  // Log meetings and errors for debugging
   useEffect(() => {
-    if (selectedTeam?._id) {
-      dispatch(fetchTeamMembers());
-      dispatch(fetchMeetingsByTeamId(selectedTeam._id));
+    if (meetings) {
+      console.log("✅ Project Meetings:", meetings);
     }
-  }, [dispatch, selectedTeam]);
+    if (error) {
+      console.error("❌ Error fetching meetings:", error);
+    }
+  }, [meetings, error]);
 
-  const handleCreateOrUpdateMeeting = async (payload) => {
-    try {
-      if (editMeeting) {
-        await dispatch(updateMeeting({ id: editMeeting._id, data: payload })).unwrap();
-        toast.success('Meeting updated successfully');
-      } else {
-        await dispatch(createMeeting({ ...payload, teamId: selectedTeam._id })).unwrap();
-        toast.success('Meeting created successfully');
-      }
-      setShowMeetingForm(false);
-      setEditMeeting(null);
-      dispatch(fetchMeetingsByTeamId(selectedTeam._id));
-    } catch (err) {
-      toast.error('Failed to process meeting');
-    }
+  const formatDateTime = (dateTime) => {
+    const date = new Date(dateTime);
+    return date.toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
   };
 
+  // Ensure meetings is an array to prevent 'slice' error
+  const safeMeetings = Array.isArray(meetings) ? meetings : [];
+  const indexOfLastMeeting = currentPage * meetingsPerPage;
+  const indexOfFirstMeeting = indexOfLastMeeting - meetingsPerPage;
+  const currentMeetings = safeMeetings.slice(indexOfFirstMeeting, indexOfLastMeeting);
+  const totalPages = Math.ceil(safeMeetings.length / meetingsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
-    <div className="space-y-6">
-      {/* Select Team */}
-      <div className="space-y-2">
-        <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-          <FiUsers className="text-blue-600" /> Project Teams
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {teams
-            .filter((t) => t.projectId === projectId)
-            .map((team) => (
-              <Button
-                key={team._id}
-                variant={selectedTeam?._id === team._id ? 'default' : 'outline'}
-                onClick={() => setSelectedTeam(team)}
-              >
-                {team.teamLeadName} Team
-              </Button>
-            ))}
+    <div className="w-full space-y-4 p-6">
+  
+
+      {loading && (
+        <div className="flex items-center justify-center py-10">
+          <Spinner className="h-6 w-6 text-blue-600 animate-spin" />
         </div>
-      </div>
+      )}
 
-      {/* Meetings List */}
-      {selectedTeam && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl font-bold text-gray-700 flex items-center gap-2">
-              <FiCalendar className="text-green-600" /> Meetings
-            </h3>
-            <Button onClick={() => setShowMeetingForm(true)}>
-              <FiPlus className="mr-1" /> Schedule Meeting
-            </Button>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {meetingStatus === 'loading' ? (
-              <p>Loading...</p>
-            ) : meetings?.length ? (
-              meetings.map((meeting) => (
-                <div
-                  key={meeting._id}
-                  className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md"
-                >
-                  <h4 className="font-semibold text-lg text-gray-800 mb-1">
+      {!loading && !error && safeMeetings.length === 0 && (
+        <p className="text-muted-foreground">No meetings found for this project.</p>
+      )}
+
+      {!loading && !error && safeMeetings.length > 0 && (
+        <div className="overflow-x-auto border rounded-md">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="bg-blue-50 text-xs text-blue-800 uppercase">
+              <tr>
+                <th className="p-3 border">Summary</th>
+                <th className="p-3 border">Start</th>
+                <th className="p-3 border">End</th>
+                <th className="p-3 border text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentMeetings.map((meeting) => (
+                <tr key={meeting.eventId} className="hover:bg-gray-50">
+                  <td className="p-3 border max-w-xs truncate">
                     {meeting.summary}
-                  </h4>
-                  <p className="text-sm text-gray-600 mb-1">Date: {meeting.date}</p>
-                  <p className="text-sm text-gray-600 mb-1">
-                    Time: {meeting.selectedSlot?.startTime} - {meeting.selectedSlot?.endTime}
-                  </p>
-                  <p className="text-sm text-gray-600 mb-2">
-                    Attendees: {meeting.attendees?.map((a) => a.email).join(', ')}
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setEditMeeting(meeting);
-                      setShowMeetingForm(true);
-                    }}
-                    className="text-sm flex gap-1 items-center"
-                  >
-                    <FiEdit2 /> Edit
-                  </Button>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-sm">No meetings scheduled.</p>
-            )}
-          </div>
+                  </td>
+                  <td className="p-3 border whitespace-nowrap">
+                    {formatDateTime(meeting.start)}
+                  </td>
+                  <td className="p-3 border whitespace-nowrap">
+                    {formatDateTime(meeting.end)}
+                  </td>
+                  <td className="p-3 border text-center">
+                    <div className="flex justify-center gap-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={() => setSelectedMeeting(meeting)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>View Meeting</p>
+                          </TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={() => setSelectedMoMMeeting(meeting)}
+                            >
+                              <FileText className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>View MoM</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* Meeting Form Modal */}
-      {showMeetingForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div
-            className="bg-white p-6 rounded-lg max-w-xl w-full relative shadow-xl overflow-y-auto max-h-[90vh]"
-            onClick={(e) => e.stopPropagation()}
-          >
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2 mt-4 flex-wrap">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <Button
-              size="icon"
-              variant="ghost"
-              className="absolute top-2 right-2"
-              onClick={() => {
-                setShowMeetingForm(false);
-                setEditMeeting(null);
-              }}
+              key={page}
+              size="sm"
+              variant={page === currentPage ? "default" : "outline"}
+              onClick={() => paginate(page)}
             >
-              ✕
+              {page}
             </Button>
-            <TeamMeetingCreateForm
-              onSubmit={handleCreateOrUpdateMeeting}
-              initialData={editMeeting}
-            />
-          </div>
+          ))}
         </div>
       )}
+
+      {/* Dialog: View Meeting Details */}
+      <Dialog open={!!selectedMeeting} onOpenChange={() => setSelectedMeeting(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-blue-600">
+              {selectedMeeting?.summary}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedMeeting && (
+            <ScrollArea className="max-h-[70vh] pr-2 space-y-3 text-sm">
+              <Separator />
+              <p>
+                <strong>Description:</strong>{" "}
+                {selectedMeeting.description || "N/A"}
+              </p>
+              <div className="flex items-center gap-2 text-gray-600">
+                <CalendarDays className="w-4 h-4" />
+                Start: {formatDateTime(selectedMeeting.start)}
+              </div>
+              <div className="flex items-center gap-2 text-gray-600">
+                <Clock className="w-4 h-4" />
+                End: {formatDateTime(selectedMeeting.end)}
+              </div>
+              <div className="flex items-start gap-2 text-gray-600">
+                <Users className="w-4 h-4 mt-1" />
+                <div>
+                  <strong>Attendees:</strong>
+                  <ul className="list-disc ml-4">
+                    {selectedMeeting.attendees.length > 0 ? (
+                      selectedMeeting.attendees.map((attendee) => (
+                        <li key={attendee.email}>
+                          {attendee.email} ({attendee.responseStatus})
+                        </li>
+                      ))
+                    ) : (
+                      <li>No attendees</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-gray-600">
+                <Video className="w-4 h-4" />
+                <a
+                  href={selectedMeeting.hangoutLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  Join Meeting
+                </a>
+              </div>
+              <p>
+                <strong>Event ID:</strong>{" "}
+                {selectedMeeting.eventId || "N/A"}
+              </p>
+              <p>
+                <strong>Calendar Link:</strong>{" "}
+                <a
+                  href={selectedMeeting.htmlLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  Open in Calendar
+                </a>
+              </p>
+            </ScrollArea>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: View MoM Details */}
+      <Dialog open={!!selectedMoMMeeting} onOpenChange={() => setSelectedMoMMeeting(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-blue-600">
+              MoM for: {selectedMoMMeeting?.summary}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedMoMMeeting && (
+            <div className="max-h-[70vh] overflow-y-auto">
+              <ProjectWiseTeamMeetMOMDetails
+                project={project}
+                meeting={selectedMoMMeeting}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

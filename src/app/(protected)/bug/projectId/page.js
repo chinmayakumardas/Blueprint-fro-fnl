@@ -26,7 +26,6 @@ export default function ProjectBugListPage() {
     <Suspense
       fallback={
         <div className="p-4">
-          <h1 className="text-2xl font-semibold mb-4">Loading...</h1>
           <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="h-8 w-full bg-gray-200 rounded-md animate-pulse" />

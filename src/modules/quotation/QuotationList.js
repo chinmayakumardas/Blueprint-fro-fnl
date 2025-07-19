@@ -83,7 +83,7 @@ const handleViewQuotation = async (quotationNumber) => {
   setLoadingQuotation(true);
 
   setSelectedQuotationNumber(quotationNumber); // Triggers the useEffect above
-console.log("Selected Quotation clientStatus:", clientStatus);
+// console.log("Selected Quotation clientStatus:", clientStatus);
   const result = await dispatch(getQuotationById(quotationNumber));
   if (result?.payload) {
     setIsViewModalOpen(true);
@@ -616,18 +616,7 @@ console.log("Selected Quotation clientStatus:", clientStatus);
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        {
-                          quotation.Status !== "final" && (
-                            <Button
-                              title="Create PDF"
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleViewPdf()}
-                            >
-                              <Calendar className="h-4 w-4" />
-                            </Button>
-                          )
-                        }
+                       
                         <Button
                           title="Edit Quotation"
                           variant="outline"

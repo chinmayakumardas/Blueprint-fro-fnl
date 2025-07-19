@@ -7,7 +7,7 @@ import { useEffect, useState, useRef } from 'react';
 import { validateInput, sanitizeInput } from '@/utils/sanitize';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { fetchProjectById, updateProject } from '@/features/projectSlice'; // Corrected import
+import { fetchProjectById, updateProject } from '@/features/projectSlice';
 import {
   FiCalendar,
   FiUser,
@@ -23,34 +23,36 @@ import {
 } from 'react-icons/fi';
 import { toast } from 'sonner';
 import TeamLeadSelect from '@/modules/project/TeamLeadSelect';
+import ClientSelect from '@/modules/project/ClientSelect';
 import gsap from 'gsap';
 
 export default function ProjectEditForm({ projectId }) {
-  // console.log('Project ID:', projectId);
   const dispatch = useDispatch();
   const router = useRouter();
-  const { project, status, error } = useSelector((state) => state.project); // Corrected selector
+  const { project, status, error } = useSelector((state) => state.project);
 
   const formRef = useRef(null);
   const fileInputRef = useRef(null);
   const teamLeadSelectRef = useRef(null);
+  const clientSelectRef = useRef(null);
 
   const [formData, setFormData] = useState({
     projectName: '',
     description: '',
+    clientId: '',
     teamLeadId: '',
     teamLeadName: '',
     startDate: '',
     endDate: '',
     category: '',
     attachments: [],
-    
   });
 
   const [isTeamLeadSelectOpen, setIsTeamLeadSelectOpen] = useState(false);
+  const [isClientSelectOpen, setIsClientSelectOpen] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [fileErrors, setFileErrors] = useState([]);
-  const [isFormInitialized, setIsFormInitialized] = useState(false); // Flag to prevent loop
+  const [isFormInitialized, setIsFormInitialized] = useState(false);
 
   // Fetch project data on component mount
   useEffect(() => {
@@ -74,22 +76,26 @@ export default function ProjectEditForm({ projectId }) {
       setFormData({
         projectName: project.data.projectName || '',
         description: project.data.description || '',
+        clientId: project.data.clientId || '',
         teamLeadId: project.data.teamLeadId || '',
         teamLeadName: project.data.teamLeadName || '',
         startDate: project.data.startDate ? project.data.startDate.split('T')[0] : '',
         endDate: project.data.endDate ? project.data.endDate.split('T')[0] : '',
         category: project.data.category || '',
-        attachments: [], // Initialize with no files; existing files handled separately
+        attachments: [],
       });
-      setIsFormInitialized(true); // Prevent re-initialization
+      setIsFormInitialized(true);
     }
   }, [project, status.fetchProject, isFormInitialized]);
 
-  // Click outside handler for team lead select dropdown
+  // Click outside handler for select dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (teamLeadSelectRef.current && !teamLeadSelectRef.current.contains(event.target)) {
         setIsTeamLeadSelectOpen(false);
+      }
+      if (clientSelectRef.current && !clientSelectRef.current.contains(event.target)) {
+        setIsClientSelectOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -101,6 +107,7 @@ export default function ProjectEditForm({ projectId }) {
   const [formErrors, setFormErrors] = useState({
     projectName: '',
     description: '',
+    clientId: '',
     teamLeadId: '',
     teamLeadName: '',
     startDate: '',
@@ -111,6 +118,7 @@ export default function ProjectEditForm({ projectId }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     const validation = validateInput(value);
+
     if (!validation.isValid) {
       setFormErrors((prev) => ({
         ...prev,
@@ -129,6 +137,15 @@ export default function ProjectEditForm({ projectId }) {
       ...formData,
       [name]: sanitizedValue,
     };
+
+    // Reset clientId when category changes to in house
+    if (name === 'category' && sanitizedValue === 'in house') {
+      updatedFormData.clientId = '';
+      setFormErrors((prev) => ({
+        ...prev,
+        clientId: '',
+      }));
+    }
 
     if (name === 'startDate' && updatedFormData.endDate && new Date(sanitizedValue) > new Date(updatedFormData.endDate)) {
       setFormErrors((prev) => ({
@@ -194,10 +211,7 @@ export default function ProjectEditForm({ projectId }) {
 
     if (errors.length > 0) {
       setFileErrors(errors);
-      toast.success( 'File Upload Error'
-        
-      
-      );
+      toast.error(errors.join(' '));
     }
 
     if (validFiles.length > 0) {
@@ -238,7 +252,8 @@ export default function ProjectEditForm({ projectId }) {
     const newErrors = { ...formErrors };
 
     for (const [key, value] of Object.entries(formData)) {
-      if (key === 'attachments') continue;
+      if (key === 'attachments' || key === 'teamLeadName') continue;
+      if (key === 'clientId' && formData.category === 'in house') continue;
       const validation = validateInput(value);
       if (!validation.isValid) {
         newErrors[key] = validation.warning;
@@ -256,9 +271,7 @@ export default function ProjectEditForm({ projectId }) {
 
     if (hasErrors) {
       setFormErrors(newErrors);
-      toast.error( 'Please fix the errors in the form before submitting.',
-        
-      );
+      toast.error('Please fix the errors in the form before submitting.');
       return;
     }
 
@@ -266,6 +279,9 @@ export default function ProjectEditForm({ projectId }) {
       const submissionData = new FormData();
       submissionData.append('projectName', formData.projectName);
       submissionData.append('description', formData.description);
+      if (formData.category === 'client') {
+        submissionData.append('clientId', formData.clientId);
+      }
       submissionData.append('teamLeadId', formData.teamLeadId);
       submissionData.append('teamLeadName', formData.teamLeadName);
       submissionData.append('startDate', formData.startDate);
@@ -285,14 +301,10 @@ export default function ProjectEditForm({ projectId }) {
 
       await dispatch(updateProject({ projectId, updatedData: submissionData })).unwrap();
 
-      toast.success( 'Project updated successfully!',
-       
-      );
+      toast.success('Project updated successfully!');
       router.push('/project');
     } catch (err) {
-      toast.error( `Failed to update project: ${err.message || 'Unknown error'}`,
-        
-      );
+      toast.error(`Failed to update project: ${err.message || 'Unknown error'}`);
       gsap.to(formRef.current, {
         opacity: 1,
         y: 0,
@@ -416,6 +428,27 @@ export default function ProjectEditForm({ projectId }) {
               <option value="in house">In House</option>
             </select>
           </div>
+
+          {formData.category === "client" && (
+            <div ref={clientSelectRef} className="p-4 border border-gray-200 rounded-lg">
+              <label className={`flex items-center text-sm font-medium mb-1 ${formErrors.clientId ? 'text-red-500' : 'text-gray-600'}`}>
+                <FiUser className="mr-2" />
+                Client
+                {formErrors.clientId && <span className="ml-2 text-xs font-normal">({formErrors.clientId})</span>}
+              </label>
+              <ClientSelect
+                value={formData.clientId}
+                isOpen={isClientSelectOpen}
+                onToggle={() => setIsClientSelectOpen(!isClientSelectOpen)}
+                onChange={(value) => {
+                  setFormData((prev) => ({ ...prev, clientId: value }));
+                  setIsClientSelectOpen(false);
+                  setFormErrors((prev) => ({ ...prev, clientId: '' }));
+                }}
+                disabled={status.fetchProject === 'loading' || status.updateProject === 'loading'}
+              />
+            </div>
+          )}
 
           <div ref={teamLeadSelectRef} className="p-4 border border-gray-200 rounded-lg">
             <label className={`flex items-center text-sm font-medium mb-1 ${formErrors.teamLeadId ? 'text-red-500' : 'text-gray-600'}`}>
@@ -608,6 +641,3 @@ export default function ProjectEditForm({ projectId }) {
     </div>
   );
 }
-
-
-

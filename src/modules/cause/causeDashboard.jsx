@@ -177,7 +177,7 @@ function CauseDashboard() {
   }
 
   return (
-    <div className="w-full mx-auto p-4 sm:p-6 lg:p-8">
+    <div className="w-full min-h-[80vh] mx-auto p-4 sm:p-6 lg:p-8">
       <div className="bg-white rounded-xl shadow-xl border border-green-200">
         {/* Header */}
         <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-t-xl p-4 sm:p-6">

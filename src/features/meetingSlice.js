@@ -6,7 +6,7 @@ export const fetchMeetings = createAsyncThunk(
   async (email, { rejectWithValue }) => {
     try {
       const response = await axiosInstance3.get(`/meetings/upcoming/${email}`);
-      // console.log('Fetched meetings:', response.data);
+      console.log('Fetched meetings:', response.data);
       return response.data.events;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch meetings');

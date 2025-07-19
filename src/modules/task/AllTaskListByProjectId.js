@@ -38,7 +38,7 @@ const AllTaskListByProjectId = ({ projectId ,project}) => {
   const error = useSelector(selectTaskError);
 
 
-console.log('Tasks:', tasks);
+// console.log('Tasks:', tasks);
 
 
   
@@ -174,7 +174,7 @@ console.log('Tasks:', tasks);
                   <td className="px-4 py-4 whitespace-nowrap">{index + 1}</td>
                   <td className="px-4 py-4 whitespace-nowrap">{task.task_id}</td>
                   <td className="px-4 py-4 whitespace-nowrap">{task.title}</td>
-                  <td className="px-4 py-4 whitespace-nowrap">{task?.assignedToDetails.memberName}</td>
+                  <td className="px-4 py-4 whitespace-nowrap">{task?.assignedToDetails?.memberName}</td>
                   <td className="px-4 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 inline-flex text-xs font-medium rounded-full ${
@@ -216,7 +216,7 @@ console.log('Tasks:', tasks);
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => handleViewTask(task.task_id)}
-                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                        className="text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
                         aria-label={`View task ${task.title}`}
                         title="View Task"
                       >
@@ -226,7 +226,7 @@ console.log('Tasks:', tasks);
     
                         <button
                           onClick={() => handleEditTask(task.task_id)}
-                          className="text-yellow-600 hover:text-yellow-800 transition-colors"
+                          className="text-yellow-600 hover:text-yellow-800 transition-colors cursor-pointer"
                           aria-label={`Edit task ${task.title}`}
                           title="Edit Task"
                         >
@@ -234,7 +234,7 @@ console.log('Tasks:', tasks);
                         </button>
                         <button
                           onClick={() => openDeleteModal(task.task_id)}
-                          className="text-red-600 hover:text-red-800 transition-colors"
+                          className="text-red-600 hover:text-red-800 transition-colors cursor-pointer"
                           aria-label={`Delete task ${task.title}`}
                           title="Delete Task"
                         >

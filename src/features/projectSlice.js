@@ -56,6 +56,21 @@ export const fetchTeamLeads = createAsyncThunk(
   }
 );
 
+
+// Delete project by ID
+export const deleteProject = createAsyncThunk(
+  'project/deleteProject',
+  async (projectId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(`/projects/soft-delete/${projectId}`);
+      return { projectId, message: response.data?.message || 'Project deleted successfully' };
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to delete project');
+    }
+  }
+);
+
+
 // Create new project
 export const createProject = createAsyncThunk(
   'project/createProject',
@@ -138,6 +153,7 @@ const initialState = {
     statusChange: 'idle',
     fetchAllProjects: 'idle',
     fetchEmployeeProjects: 'idle',
+     deleteProject: 'idle',
   },
   error: {
     fetchProject: null,
@@ -148,6 +164,7 @@ const initialState = {
     statusChange: null,
     fetchAllProjects: null,
     fetchEmployeeProjects: null,
+    deleteProject: null,
   },
   successMessage: null,
 };
@@ -302,7 +319,29 @@ const projectSlice = createSlice({
       .addCase(fetchProjectsByEmployeeId.rejected, (state, action) => {
         state.status.fetchEmployeeProjects = 'failed';
         state.error.fetchEmployeeProjects = action.payload;
-      });
+      })
+      // Delete Project
+.addCase(deleteProject.pending, (state) => {
+  state.status.deleteProject = 'loading';
+  state.error.deleteProject = null;
+  state.successMessage = null;
+})
+.addCase(deleteProject.fulfilled, (state, action) => {
+  state.status.deleteProject = 'succeeded';
+  state.projects = state.projects.filter(
+    (project) => project._id !== action.payload.projectId
+  );
+  state.successMessage = action.payload.message;
+  state.error.deleteProject = null;
+})
+.addCase(deleteProject.rejected, (state, action) => {
+  state.status.deleteProject = 'failed';
+  state.error.deleteProject = action.payload;
+})
+
+      
+      
+      ;
   },
 });
 
@@ -312,6 +351,7 @@ export const {
   resetSuccessMessage,
   clearProjects,
   clearEmployeeProjects,
+  
 } = projectSlice.actions;
 
 export default projectSlice.reducer;

@@ -93,10 +93,7 @@ export const updateMoM = createAsyncThunk(
   "mom/updateMoM",
   async (momData, { rejectWithValue }) => {
     try {
-      // console.log("Payload being sent:", momData); // Debug: Log the FormData
-      for (let [key, value] of momData.entries()) {
-        // console.log(`${key}:`, value); // Debug: Log FormData entries
-      }
+     
       const response = await axiosInstance.post("/mom/createmom", momData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -104,7 +101,6 @@ export const updateMoM = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
-      // console.error("Error in updateMoM:", error); // Debug: Log errors
       return rejectWithValue(error.response?.data?.message || "Failed to update MoM");
     }
   }

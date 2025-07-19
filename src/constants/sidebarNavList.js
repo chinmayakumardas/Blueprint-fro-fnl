@@ -32,7 +32,8 @@ export const fullNav = [
       { title: "Client Meeting", url: "/meetings/all", roles: ["cpc"] },
       { title: "Meeting Calendar", url: "/meetings/calendar", roles: ["cpc"] },
       { title: "Team Calendar", url: "/meetings/team-calendar", roles: ["cpc","employee"] },
-      { title: "Mom Dashboard", url: "/meetings/mom", roles: ["cpc"] },
+      { title: "MOM Dashboard", url: "/meetings/mom", roles: ["cpc"] },
+      { title: "Cause Dashboard", url: "/meetings/cause", roles: ["cpc"] },
     ],
   },
   {
