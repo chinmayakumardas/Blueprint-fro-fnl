@@ -128,15 +128,15 @@ export function SectionCardCPC() {
     {
       title: "Total Projects",
       count: animatedProjects,
-      badge: "+12.5%",
+      // badge: "+12.5%",
       trendIcon: <IconTrendingUp />,
       footer: "Increased project participation",
-      note: "Tracks all assigned or collaborated projects",
+      note: "Tracks all projects",
     },
     {
       title: "All Clients",
       count: animatedClients,
-      badge: "-20%",
+      // badge: "-20%",
       trendIcon: <IconTrendingDown />,
       footer: "Client acquisition dropped",
       note: "Consider reviewing outreach strategy",
@@ -144,7 +144,7 @@ export function SectionCardCPC() {
     {
       title: "Active Tasks",
       count: animatedTasks,
-      badge: "+12.5%",
+      // badge: "+12.5%",
       trendIcon: <IconTrendingUp />,
      footer: "Strong user retention",
     note: "Task activity exceeds expectations",
@@ -152,7 +152,7 @@ export function SectionCardCPC() {
     {
       title: "All Teams",
       count: animatedTeams,
-      badge: "+4.5%",
+      // badge: "+4.5%",
       trendIcon: <IconTrendingUp />,
       footer: "Consistent team performance",
     note: "On track with growth metrics",
@@ -177,9 +177,9 @@ export function SectionCardCPC() {
                   <CardDescription>{card.title}</CardDescription>
                   <CardTitle className="text-2xl font-semibold">{card.count}</CardTitle>
                   <CardAction>
-                    <Badge variant="outline">
+                    {/* <Badge variant="outline">
                       {card.trendIcon} {card.badge}
-                    </Badge>
+                    </Badge> */}
                   </CardAction>
                 </CardHeader>
                 <CardFooter className="flex-col items-start gap-1.5 text-sm">

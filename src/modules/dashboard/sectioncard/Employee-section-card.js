@@ -82,28 +82,28 @@ export function SectionCardEmployee({ employeeId }) {
     {
       title: "Total Projects I Worked",
       count: animatedProjects,
-      badge: "+12.5%",
+      // badge: "+12.5%",
     footer: "Increased project participation",
-    note: "Tracks all assigned or collaborated projects",
+    note: "Tracks all assigned  projects",
     },
     {
       title: "My Tasks",
       count: animatedTasks,
-      badge: "+12.5%",
+      // badge: "+12.5%",
       footer: "Strong user retention",
     note: "Task activity exceeds expectations",
     },
     {
       title: "Bug Found",
       count: animatedBugs,
-      badge: "+12.5%",
+      // badge: "+12.5%",
        footer: "Increased QA visibility",
   note: "Helps improve overall system stability",
     },
     {
       title: "All Teams We Worked",
       count: animatedTeams,
-      badge: "+4.5%",
+      // badge: "+4.5%",
     footer: "Consistent team performance",
     note: "On track with growth metrics",
     },
@@ -127,9 +127,9 @@ export function SectionCardEmployee({ employeeId }) {
                   <CardDescription>{card.title}</CardDescription>
                   <CardTitle className="text-2xl font-semibold">{card.count}</CardTitle>
                   <CardAction>
-                    <Badge variant="outline">
+                    {/* <Badge variant="outline">
                       <IconTrendingUp className="size-4" /> {card.badge}
-                    </Badge>
+                    </Badge> */}
                   </CardAction>
                 </CardHeader>
                 <CardFooter className="flex-col items-start gap-1.5 text-sm">
