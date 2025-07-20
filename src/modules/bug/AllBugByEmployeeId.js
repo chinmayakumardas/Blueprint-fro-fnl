@@ -8,7 +8,7 @@ import {
   resolveBug,
   clearErrors,
 } from '@/features/bugSlice'
-import { Bug as BugIcon, Loader2, Search, Filter, ChevronDown, ArrowUp, ArrowDown, Eye, UserCheck } from 'lucide-react'
+import { Bug as BugIcon, Loader2, Search, Filter, ChevronDown, ArrowUp, ArrowDown, Eye } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -54,13 +54,21 @@ const priorityColors = {
   Low: 'bg-green-100 text-green-800 border-green-200',
 }
 
+const reviewStatusColors = {
+  NA: 'bg-gray-100 text-gray-800 border-gray-300',
+  INREVIEW: 'bg-blue-100 text-blue-800 border-blue-200',
+  BUGREPORTED: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+  RESOLVED: 'bg-green-100 text-green-800 border-green-300',
+}
+
 // Separate selectors for each state property
 const selectBugsByEmployeeId = (state) => state.bugs.bugsByEmployeeId
 const selectLoading = (state) => state.bugs.loading
 const selectError = (state) => state.bugs.error
+
 export default function AllBugByEmployeeId() {
-  const {currentUser} = useCurrentUser();
-  const employeeId = currentUser?.id ; // Use current user's employeeId if available
+  const { currentUser } = useCurrentUser()
+  const employeeId = currentUser?.id
   const dispatch = useDispatch()
   const bugsByEmployeeId = useSelector(selectBugsByEmployeeId)
   const loading = useSelector(selectLoading)
@@ -75,6 +83,7 @@ export default function AllBugByEmployeeId() {
   const [goToPage, setGoToPage] = useState('')
   const [selectedBug, setSelectedBug] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [delayReason, setDelayReason] = useState('')
 
   useEffect(() => {
     if (employeeId) {
@@ -163,16 +172,31 @@ export default function AllBugByEmployeeId() {
 
   const handleViewClick = (bug) => {
     setSelectedBug(bug)
+    setDelayReason('')
     setIsModalOpen(true)
   }
 
   const handleModalClose = () => {
     setIsModalOpen(false)
     setSelectedBug(null)
+    setDelayReason('')
   }
 
   const handleResolveBug = (bugId) => {
-    dispatch(resolveBug(bugId)).then((result) => {
+    if (!selectedBug) return
+
+    const isPastDeadline = new Date() > new Date(selectedBug.deadline)
+    if (isPastDeadline && !delayReason.trim()) {
+      toast.error('Please provide a reason for the delay.')
+      return
+    }
+
+    const payload = {
+      bugId,
+      ...(isPastDeadline && { delayReason }),
+    }
+
+    dispatch(resolveBug(payload)).then((result) => {
       if (result.error) {
         toast.error(`Failed to resolve bug: ${result.error.message}`)
       } else {
@@ -456,7 +480,6 @@ export default function AllBugByEmployeeId() {
                   {sortField === 'title' &&
                     (sortDirection === 'asc' ? <ArrowUp className="inline ml-1" /> : <ArrowDown className="inline ml-1" />)}
                 </TableHead>
-                <TableHead className="text-green-800">Description</TableHead>
                 <TableHead className="text-green-800">Task Ref</TableHead>
                 <TableHead
                   className="text-green-800 cursor-pointer"
@@ -483,7 +506,6 @@ export default function AllBugByEmployeeId() {
                 <TableRow key={bug._id} className="hover:bg-green-50">
                   <TableCell className="font-medium text-green-900">{bug.bug_id}</TableCell>
                   <TableCell className="text-green-900 max-w-xs truncate">{bug.title}</TableCell>
-                  <TableCell className="text-green-900 max-w-md truncate">{bug.description}</TableCell>
                   <TableCell className="text-green-900">{bug.taskRef}</TableCell>
                   <TableCell>
                     <Badge className={`${statusColors[bug.status.toLowerCase()]} border capitalize`}>
@@ -517,9 +539,9 @@ export default function AllBugByEmployeeId() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4 mt-4 mb-10">
+            <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4 mt-4 mb-10 px-4">
               <div className="flex items-center space-x-2">
-                <Label htmlFor="itemsPerPage" className="text-green-700 ml-4">Bugs per page:</Label>
+                <Label htmlFor="itemsPerPage" className="text-green-700">Bugs per page:</Label>
                 <Select
                   value={itemsPerPage.toString()}
                   onValueChange={(value) => setItemsPerPage(Number(value))}
@@ -577,10 +599,12 @@ export default function AllBugByEmployeeId() {
                   onChange={(e) => setGoToPage(e.target.value)}
                   className="w-20 border-green-400 focus:ring-green-500"
                   placeholder="Page"
+                  min="1"
+                  max={totalPages}
                 />
                 <Button
                   onClick={handleGoToPage}
-                  className="bg-green-600 hover:bg-green-700 text-white mr-4"
+                  className="bg-green-600 hover:bg-green-700 text-white"
                 >
                   Go
                 </Button>
@@ -596,9 +620,6 @@ export default function AllBugByEmployeeId() {
           <DialogHeader>
             <DialogTitle className="text-green-800">Bug Details</DialogTitle>
           </DialogHeader>
-          {
-            console.log(selectedBug)
-          }
           {selectedBug && (
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -617,35 +638,24 @@ export default function AllBugByEmployeeId() {
                 <Label className="text-right text-green-700">Task Ref</Label>
                 <span className="col-span-3 text-green-900">{selectedBug.taskRef}</span>
               </div>
-               <div className="grid grid-cols-4 items-center gap-4">
+              <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right text-green-700">Project Id</Label>
                 <span className="col-span-3 text-green-900">{selectedBug.projectId}</span>
-               
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right text-green-700">Assigned To</Label>
-                <span className="col-span-3 text-green-900">{selectedBug.assignedTo}</span>
-              </div>
-              {/* Assigned To with "Me" */}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right text-green-700">Assigned To</Label>
-                <div className="col-span-3 flex items-center gap-3 text-green-900">
-                  <div className="flex items-center gap-2 bg-green-50 border border-green-200 px-3 py-2 rounded-xl shadow-sm">
-                    <UserCheck className="w-4 h-4 text-green-600" />
-                    <span className="font-medium text-sm">{selectedBug.assignedTo}</span>
-
-                    {selectedBug.assignedTo === currentUser.id && (
-                      <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-green-600 text-white font-semibold shadow-md">
-                        Me
-                      </span>
-                    )}
-                  </div>
-                </div>
+                <span className="col-span-3 text-green-900">{selectedBug?.assignedToDetails?.memberName || 'Unassigned'}</span>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right text-green-700">Status</Label>
                 <Badge className={`${statusColors[selectedBug.status.toLowerCase()]} border col-span-3 capitalize`}>
                   {selectedBug.status}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right text-green-700">Review Status</Label>
+                <Badge className={`${reviewStatusColors[selectedBug.reviewStatus]} border col-span-3 capitalize`}>
+                  {selectedBug.reviewStatus}
                 </Badge>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -655,17 +665,27 @@ export default function AllBugByEmployeeId() {
                 </Badge>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right text-green-700">Created At</Label>
+                <Label className="text-right text-green-700">Deadline</Label>
                 <span className="col-span-3 text-green-900">
-                  {new Date(selectedBug.createdAt).toLocaleString('en-IN')}
+                  {new Date(selectedBug.deadline).toLocaleDateString('en-IN')}
                 </span>
               </div>
-              {selectedBug.resolvedAt && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right text-green-700">Created At</Label>
+                <span className="col-span-3 text-green-900">
+                  {new Date(selectedBug.createdAt).toLocaleDateString('en-IN')}
+                </span>
+              </div>
+           
+              {selectedBug.status.toLowerCase() !== 'resolved' && new Date() > new Date(selectedBug.deadline) && (
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right text-green-700">Resolved At</Label>
-                  <span className="col-span-3 text-green-900">
-                    {new Date(selectedBug.resolvedAt).toLocaleString('en-IN')}
-                  </span>
+                  <Label className="text-right text-green-700">Delay Reason</Label>
+                  <Input
+                    className="col-span-3 border-green-400 focus:ring-green-500"
+                    value={delayReason}
+                    onChange={(e) => setDelayReason(e.target.value)}
+                    placeholder="Enter reason for delay"
+                  />
                 </div>
               )}
               {error.bugResolve && (
@@ -689,18 +709,9 @@ export default function AllBugByEmployeeId() {
                 )}
               </Button>
             )}
-          
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   )
 }
-
-
-
-
-
-
-
-

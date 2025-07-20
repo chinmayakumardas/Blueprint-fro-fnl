@@ -171,11 +171,11 @@ export const updateTask = createAsyncThunk(
 // Update task status
 export const updateTaskStatus = createAsyncThunk(
   'task/updateTaskStatus',
-  async ({ task_id, status, feedback }, { rejectWithValue }) => {
+  async ({ task_id, status, delayReason }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.put(
         `/task/update/${task_id}`,
-        { status, feedback },
+        { status,delayReason },
         {
           headers: { 'Content-Type': 'application/json' },
           timeout: 5000,
@@ -292,6 +292,20 @@ export const getAllTaskByEmployeeId = createAsyncThunk(
     }
   }
 );
+// Update Review Status (Simple)
+export const updateTaskReviewStatus = createAsyncThunk(
+  'task/updateTaskReviewStatus',
+  async ({ task_id, reviewStatus }, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.put(`/task/review-status/${task_id}`, {
+        reviewStatus,
+      });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Update failed');
+    }
+  }
+);
 
 const initialState = {
   tasks: [], // All tasks
@@ -302,6 +316,11 @@ const initialState = {
   allTaskList: [], // All tasks (including deleted/archived for admin)
   employeeTasks: [], // Tasks for a specific employee
   isLoading: false, // Added to handle loading state for employee tasks
+
+
+    loading: false,
+    error: null,
+    successMessage: null,
 };
 
 const taskSlice = createSlice({
@@ -311,6 +330,9 @@ const taskSlice = createSlice({
     clearError: (state) => {
       state.error = null;
       state.status = 'idle';
+    },clearTaskMessages: (state) => {
+      state.error = null;
+      state.successMessage = null;
     },
     resetCurrentTask: (state) => {
       state.currentTask = null;
@@ -483,6 +505,22 @@ const taskSlice = createSlice({
       })
       .addCase(getAllTaskByEmployeeId.rejected, (state, action) => {
         state.isLoading = false;
+        state.error = action.payload;
+      })
+       builder
+      .addCase(updateTaskReviewStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.successMessage = null;
+      })
+      .addCase(updateTaskReviewStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        state.successMessage = action.payload.message;
+        
+        // No local task update — payload can be shown via toast or component
+      })
+      .addCase(updateTaskReviewStatus.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload;
       });
   },

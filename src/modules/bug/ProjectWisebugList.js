@@ -1,35 +1,44 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Eye, Edit, Download, User, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-import * as XLSX from 'xlsx';
+import { fetchBugByProjectId, clearProjectBugs, downloadBugsByProjectId, downloadBugsByMemberId } from '@/features/bugSlice';
+import { getTeamMembersByProjectId } from '@/features/teamSlice';
+import { toast } from 'sonner';
+const ProjectWiseBugList = ({ project, projectId, teamLeadId }) => {
+  const dispatch = useDispatch();
+  const {
+    bugsByProjectId,
+    loading: bugLoading,
+    error: bugError,
+  } = useSelector((state) => ({
+    bugsByProjectId: state.bugs.bugsByProjectId,
+    loading: {
+      bugsByProjectId: state.bugs.loading.bugsByProjectId,
+      bugDownload: state.bugs.loading.bugDownload,
+      memberBugDownload: state.bugs.loading.memberBugDownload,
+    },
+    error: {
+      bugsByProjectId: state.bugs.error.bugsByProjectId,
+      bugDownload: state.bugs.error.bugDownload,
+      memberBugDownload: state.bugs.error.memberBugDownload,
+    },
+  }));
 
-// Dummy data for bugs
-const dummyBugs = [
-  { id: 1, title: "Login page crash", status: "Pending", teamMember: "Alice", priority: "High", createdAt: "2025-07-01", description: "App crashes on invalid login attempt." },
-  { id: 2, title: "API timeout error", status: "Completed", teamMember: "Bob", priority: "Medium", createdAt: "2025-07-02", description: "API call exceeds timeout limit." },
-  { id: 3, title: "UI misalignment", status: "Pending", teamMember: "Charlie", priority: "Low", createdAt: "2025-07-03", description: "UI elements misaligned on mobile view." },
-  { id: 4, title: "Database connection fail", status: "Completed", teamMember: "Alice", priority: "High", createdAt: "2025-07-04", description: "Connection to DB fails intermittently." },
-  { id: 5, title: "Form validation issue", status: "Pending", teamMember: "Bob", priority: "Medium", createdAt: "2025-07-05", description: "Form accepts invalid inputs." },
-  { id: 6, title: "Auth token refresh", status: "Completed", teamMember: "Charlie", priority: "High", createdAt: "2025-07-06", description: "Token refresh fails after expiry." },
-  { id: 7, title: "Payment gateway error", status: "Pending", teamMember: "Alice", priority: "High", createdAt: "2025-07-07", description: "Payment processing fails for some users." },
-  { id: 8, title: "Search filter bug", status: "Completed", teamMember: "Bob", priority: "Low", createdAt: "2025-07-08", description: "Search filter ignores some criteria." },
-  { id: 9, title: "Notification delay", status: "Pending", teamMember: "Charlie", priority: "Medium", createdAt: "2025-07-09", description: "Notifications delayed by several minutes." },
-  { id: 10, title: "Cache invalidation", status: "Completed", teamMember: "Alice", priority: "Medium", createdAt: "2025-07-10", description: "Cache not refreshing properly." },
-  { id: 11, title: "Session timeout", status: "Pending", teamMember: "Bob", priority: "High", createdAt: "2025-07-11", description: "Sessions time out unexpectedly." },
-];
+  const { teamMembersByProjectId, status: teamStatus, error: teamError } = useSelector(
+    (state) => state.team
+  );
 
-const BugList = () => {
-  const [bugs, setBugs] = useState(dummyBugs);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState('id');
+  const [sortField, setSortField] = useState('bug_id');
   const [sortOrder, setSortOrder] = useState('asc');
-  const [downloadFormat, setDownloadFormat] = useState('xlsx');
   const [downloadTeamMember, setDownloadTeamMember] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
   const [bugsPerPage, setBugsPerPage] = useState(() => typeof window !== "undefined" && window.innerWidth < 768 ? 5 : 10);
@@ -40,9 +49,16 @@ const BugList = () => {
   const [modalTeamMember, setModalTeamMember] = useState('');
   const [newStatus, setNewStatus] = useState('');
 
-  // Unique team members for filter
-  const teamMembers = ['All', ...new Set(dummyBugs.map(bug => bug.teamMember))];
-  const teamMembersForModal = teamMembers.filter(member => member !== 'All');
+  // Fetch bugs and team members when projectId changes
+  useEffect(() => {
+    if (projectId) {
+      dispatch(fetchBugByProjectId(projectId));
+      dispatch(getTeamMembersByProjectId(projectId));
+    }
+    return () => {
+      dispatch(clearProjectBugs());
+    };
+  }, [dispatch, projectId]);
 
   // Responsive pagination
   useEffect(() => {
@@ -54,12 +70,41 @@ const BugList = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Use Redux bugs data
+  const bugs = bugsByProjectId || [];
+
+  // Handle loading and error states for bugs and team members
+ if (bugLoading.bugsByProjectId || teamStatus === 'loading') {
+  return (
+    <div className="p-4 flex flex-col items-center justify-center gap-2 text-center">
+      <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
+
+ 
+
+
+  // Team members for filter (from Redux store)
+  const teamMembers = [
+    { memberId: 'All', memberName: 'All' },
+    ...(Array.isArray(teamMembersByProjectId) ? teamMembersByProjectId : []),
+  ];
+  const teamMembersForModal = teamMembers.filter(member => member.memberId !== 'All');
+
   // Sort and filter bugs
   const filteredBugs = bugs
     .filter(bug => bug.title.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => {
-      const fieldA = String(a[sortField] || '').toLowerCase();
-      const fieldB = String(b[sortField] || '').toLowerCase();
+      let fieldA = '';
+      let fieldB = '';
+      if (sortField === 'assignedToDetails') {
+        fieldA = String(a.assignedToDetails?.memberName || '').toLowerCase();
+        fieldB = String(b.assignedToDetails?.memberName || '').toLowerCase();
+      } else {
+        fieldA = String(a[sortField] || '').toLowerCase();
+        fieldB = String(b[sortField] || '').toLowerCase();
+      }
       return sortOrder === 'asc' ? fieldA.localeCompare(fieldB) : fieldB.localeCompare(fieldA);
     });
 
@@ -85,36 +130,49 @@ const BugList = () => {
     setCurrentPage(1);
   };
 
-  // Download function
-  const downloadFile = (data, fileName, format) => {
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Bugs');
-    if (format === 'csv') {
-      XLSX.writeFile(workbook, `${fileName}.csv`, { bookType: 'csv' });
-    } else {
-      XLSX.writeFile(workbook, `${fileName}.xlsx`);
-    }
-  };
-
   // Handle download for main download button
-  const handleDownload = () => {
-    const dataToDownload = downloadTeamMember === 'All'
-      ? filteredBugs
-      : filteredBugs.filter(bug => bug.teamMember === downloadTeamMember);
-    const fileName = downloadTeamMember === 'All' ? 'project_bugs_report' : `${downloadTeamMember}_bugs_report`;
-    downloadFile(dataToDownload, fileName, downloadFormat);
-  };
-
-  // Handle download for individual report modal
-  const handleModalDownload = () => {
-    if (modalTeamMember) {
-      const dataToDownload = filteredBugs.filter(bug => bug.teamMember === modalTeamMember);
-      downloadFile(dataToDownload, `${modalTeamMember}_bugs_report`, downloadFormat);
-      setIsIndividualModalOpen(false);
-      setModalTeamMember('');
+  const handleDownload = async () => {
+    if (downloadTeamMember === 'All') {
+      dispatch(downloadBugsByProjectId(projectId));
+      toast.success('Bug report downloaded successfully');
+    } else {
+      dispatch(downloadBugsByMemberId({ projectId, memberId: downloadTeamMember }));
+      toast.success('Bug report downloaded successfully');
     }
   };
+
+  // // Handle download for individual report modal
+  // const handleModalDownload = async () => {
+  //   if (modalTeamMember) {
+  //     dispatch(downloadBugsByMemberId({ projectId, memberId: modalTeamMember }));
+  //     toast.success('Individual report downloaded');
+  //     if(error){
+  //       toast.error(error);
+
+  //     }
+  //     setIsIndividualModalOpen(false);
+  //     setModalTeamMember('');
+  //   }
+  // };
+
+const handleModalDownload = async () => {
+  if (modalTeamMember) {
+    const result = await dispatch(
+      downloadBugsByMemberId({ projectId, memberId: modalTeamMember })
+    );
+
+    if (result.type.includes('fulfilled')) {
+      toast.success('Individual report downloaded successfully');
+    } else {
+      console.log(result); // Helpful for debugging
+      toast.error(result.payload || 'Download failed');
+    }
+
+    setIsIndividualModalOpen(false);
+    setModalTeamMember('');
+  }
+};
+
 
   // Handle view bug
   const handleViewBug = (bug) => {
@@ -125,9 +183,8 @@ const BugList = () => {
   // Handle update status
   const handleUpdateStatus = () => {
     if (selectedBug && newStatus) {
-      setBugs(bugs.map(bug =>
-        bug.id === selectedBug.id ? { ...bug, status: newStatus } : bug
-      ));
+      // TODO: Dispatch an action to update the bug status (e.g., updateBugStatus)
+      // dispatch(updateBugStatus({ bugId: selectedBug.bug_id, status: newStatus }));
       setIsUpdateModalOpen(false);
       setSelectedBug(null);
       setNewStatus('');
@@ -135,7 +192,7 @@ const BugList = () => {
   };
 
   return (
-    <div className="container mx-auto p-2 sm:p-4 bg-blue-50 min-h-screen">
+    <div className="p-2 sm:p-4">
       {/* Header Section */}
       <div className="bg-blue-100 p-4 rounded-lg mb-4 flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
@@ -146,23 +203,27 @@ const BugList = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full sm:w-1/3 border-blue-300 focus:ring-blue-500 focus:border-blue-500 text-sm"
             />
-            <Select value={downloadFormat} onValueChange={setDownloadFormat}>
+            <Select value={downloadTeamMember} onValueChange={setDownloadTeamMember}>
               <SelectTrigger className="w-full sm:w-1/4 border-blue-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
-                <SelectValue placeholder="Select format" />
+                <SelectValue placeholder="Select team member" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="xlsx">XLSX</SelectItem>
-                <SelectItem value="csv">CSV</SelectItem>
+                {teamMembers.map(member => (
+                  <SelectItem key={member.memberId} value={member.memberId}>
+                    {member.memberName}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="flex gap-2">
             <Button
               onClick={handleDownload}
-              className="bg-blue-600 hover:bg-blue-700 text-black font-semibold text-sm"
+              disabled={bugLoading.bugDownload || bugLoading.memberBugDownload}
+              className="bg-blue-600 hover:bg-blue-700 text-black font-semibold text-sm disabled:bg-blue-300"
             >
               <Download className="h-4 w-4 mr-2" />
-              Download Report
+              {bugLoading.bugDownload || bugLoading.memberBugDownload ? 'Downloading...' : 'Download Report'}
             </Button>
             <Button
               onClick={() => setIsIndividualModalOpen(true)}
@@ -173,6 +234,7 @@ const BugList = () => {
             </Button>
           </div>
         </div>
+      
       </div>
 
       {/* Individual Report Modal */}
@@ -190,7 +252,9 @@ const BugList = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {teamMembersForModal.map(member => (
-                    <SelectItem key={member} value={member}>{member}</SelectItem>
+                    <SelectItem key={member.memberId} value={member.memberId}>
+                      {member.memberName}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -209,11 +273,11 @@ const BugList = () => {
             </Button>
             <Button
               onClick={handleModalDownload}
-              disabled={!modalTeamMember}
+              disabled={!modalTeamMember || bugLoading.memberBugDownload}
               className="bg-blue-600 hover:bg-blue-700 text-black font-semibold disabled:bg-blue-300 text-sm"
             >
               <Download className="h-4 w-4 mr-2" />
-              Download
+              {bugLoading.memberBugDownload ? 'Downloading...' : 'Download'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -228,7 +292,7 @@ const BugList = () => {
           {selectedBug && (
             <div className="space-y-4 mt-2 text-black">
               <div>
-                <strong className="font-bold">ID:</strong> {selectedBug.id}
+                <strong className="font-bold">Bug ID:</strong> {selectedBug.bug_id}
               </div>
               <div>
                 <strong className="font-bold">Title:</strong> {selectedBug.title}
@@ -237,28 +301,25 @@ const BugList = () => {
                 <strong className="font-bold">Status:</strong> {selectedBug.status}
               </div>
               <div>
-                <strong className="font-bold">Team Member:</strong> {selectedBug.teamMember}
+                <strong className="font-bold">Assigned To:</strong> {selectedBug?.assignedToDetails?.memberName || 'Unassigned'}
               </div>
               <div>
                 <strong className="font-bold">Priority:</strong> {selectedBug.priority}
               </div>
               <div>
-                <strong className="font-bold">Created At:</strong> {selectedBug.createdAt}
+                <strong className="font-bold">Created At:</strong>{' '}
+                {new Date(selectedBug.createdAt).toLocaleDateString("en-IN", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
               </div>
               <div>
                 <strong className="font-bold">Description:</strong> {selectedBug.description}
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsViewModalOpen(false)}
-              className="border-blue-300 text-black hover:bg-blue-100 text-sm"
-            >
-              Close
-            </Button>
-          </DialogFooter>
+      
         </DialogContent>
       </Dialog>
 
@@ -311,10 +372,10 @@ const BugList = () => {
         <Table>
           <TableHeader className="bg-blue-100">
             <TableRow>
-              <TableHead className="text-black font-bold text-center cursor-pointer" onClick={() => handleSort('id')}>
+              <TableHead className="text-black font-bold text-center cursor-pointer" onClick={() => handleSort('bug_id')}>
                 <div className="flex items-center justify-center">
-                  ID
-                  {sortField === 'id' ? (
+                  Bug ID
+                  {sortField === 'bug_id' ? (
                     sortOrder === 'asc' ? <ArrowUp className="h-4 w-4 ml-2" /> : <ArrowDown className="h-4 w-4 ml-2" />
                   ) : (
                     <ArrowUpDown className="h-4 w-4 ml-2" />
@@ -341,10 +402,10 @@ const BugList = () => {
                   )}
                 </div>
               </TableHead>
-              <TableHead className="text-black font-bold text-center cursor-pointer" onClick={() => handleSort('teamMember')}>
+              <TableHead className="text-black font-bold text-center cursor-pointer" onClick={() => handleSort('assignedToDetails')}>
                 <div className="flex items-center justify-center">
-                  Team Member
-                  {sortField === 'teamMember' ? (
+                  Assigned To
+                  {sortField === 'assignedToDetails' ? (
                     sortOrder === 'asc' ? <ArrowUp className="h-4 w-4 ml-2" /> : <ArrowDown className="h-4 w-4 ml-2" />
                   ) : (
                     <ArrowUpDown className="h-4 w-4 ml-2" />
@@ -383,13 +444,19 @@ const BugList = () => {
               </TableRow>
             ) : (
               currentBugs.map(bug => (
-                <TableRow key={bug.id}>
-                  <TableCell className="text-center">{bug.id}</TableCell>
+                <TableRow key={bug.bug_id}>
+                  <TableCell className="text-center">{bug.bug_id}</TableCell>
                   <TableCell className="text-center">{bug.title}</TableCell>
                   <TableCell className="text-center">{bug.status}</TableCell>
-                  <TableCell className="text-center">{bug.teamMember}</TableCell>
+                  <TableCell className="text-center">{bug?.assignedToDetails?.memberName || 'Unassigned'}</TableCell>
                   <TableCell className="text-center">{bug.priority}</TableCell>
-                  <TableCell className="text-center">{bug.createdAt}</TableCell>
+                  <TableCell className="text-center">
+                    {new Date(bug.createdAt).toLocaleDateString("en-IN", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center gap-2">
                       <Button
@@ -401,7 +468,7 @@ const BugList = () => {
                         <Eye className="h-4 w-4 mr-2" />
                         View
                       </Button>
-                      <Button
+                      {/* <Button
                         variant="outline"
                         size="sm"
                         onClick={() => {
@@ -412,7 +479,7 @@ const BugList = () => {
                       >
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
-                      </Button>
+                      </Button> */}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -478,4 +545,4 @@ const BugList = () => {
   );
 };
 
-export default BugList;
+export default ProjectWiseBugList;

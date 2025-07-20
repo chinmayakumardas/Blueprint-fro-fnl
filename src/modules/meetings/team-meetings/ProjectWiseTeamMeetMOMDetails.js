@@ -191,7 +191,7 @@ function ProjectWiseTeamMeetMOMDetails({ project, meeting, onClose }) {
     setIsAgreedToTerms(false);
     setSignatureFile(null);
     setSignaturePreview(null);
-  }, [momByMeetingId, adaptedMeeting, currentUser?.name, project?.projectName]);
+  }, [momByMeetingId, adaptedMeeting, currentUser?.name, project?.projectName,checkMeetingTimeStatus,getDurationString]);
 
   // Effect: Fetch MoM data when dialog opens
   useEffect(() => {
@@ -221,7 +221,7 @@ function ProjectWiseTeamMeetMOMDetails({ project, meeting, onClose }) {
       }
       dispatch(resetMoMByMeetingId());
     };
-  }, [dispatch]);
+  }, );
 
   // Handler: Form input changes
   const handleMomFormChange = (e, field) => {

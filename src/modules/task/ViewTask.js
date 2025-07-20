@@ -1,12 +1,10 @@
 
-
-
 "use client";
 
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams, useRouter } from "next/navigation";
-import { fetchTaskById } from "@/features/taskSlice";
+import { fetchTaskById, updateTaskReviewStatus } from "@/features/taskSlice";
 import { createBug } from "@/features/bugSlice";
 import { useLoggedinUser } from "@/hooks/useLoggedinUser";
 import {
@@ -15,7 +13,6 @@ import {
   FileText,
   Clock,
   Bug,
-  Hash,
   Briefcase,
   Mail,
   UserCheck,
@@ -48,7 +45,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"; // ShadCN UI Calendar
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"; // ShadCN UI Popover
+import { format } from "date-fns"; // For formatting dates
+import { CalendarIcon } from "lucide-react"; // For calendar icon in date picker
+const reviewStatusColors = {
+  Pending: "bg-yellow-100 text-yellow-800 border-yellow-300",
+  Approved: "bg-green-100 text-green-800 border-green-300",
+  Rejected: "bg-red-100 text-red-800 border-red-300",
+};
 const ViewTask = () => {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -62,8 +71,24 @@ const ViewTask = () => {
   const [bugTitle, setBugTitle] = useState("");
   const [bugDescription, setBugDescription] = useState("");
   const [bugPriority, setBugPriority] = useState("Medium");
+  const [bugDeadline, setBugDeadline] = useState(null); // Store as Date object
   const [isVisible, setIsVisible] = useState(false);
-
+const handleMarkAsResolved = () => {
+ 
+  dispatch(
+    updateTaskReviewStatus({
+      task_id: task_id,
+      reviewStatus: "Resolved",
+    })
+  )
+    .unwrap()
+    .then(() => {
+      toast.success("Task review status updated to Resolved!");
+    })
+    .catch((err) => {
+      toast.error(`Failed to update review status: ${err}`);
+    });
+};
   useEffect(() => {
     if (task_id) {
       dispatch(fetchTaskById(task_id));
@@ -90,11 +115,22 @@ const ViewTask = () => {
     setBugTitle("");
     setBugDescription("");
     setBugPriority("Medium");
+    setBugDeadline(null); // Reset deadline
   };
 
   const handleSubmit = async () => {
     if (!bugTitle.trim() || !bugDescription.trim()) {
       toast.error("Please provide both a bug title and description.");
+      return;
+    }
+    if (!bugDeadline) {
+      toast.error("Please select a deadline for the bug.");
+      return;
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to start of day
+    if (bugDeadline < today) {
+      toast.error("The deadline cannot be in the past.");
       return;
     }
     dispatch(
@@ -103,6 +139,7 @@ const ViewTask = () => {
         description: bugDescription,
         task_id: task_id,
         priority: bugPriority,
+        deadline: format(bugDeadline, "yyyy-MM-dd"), // Format as YYYY-MM-DD
       })
     )
       .unwrap()
@@ -191,82 +228,147 @@ const ViewTask = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-full">
-        <Card
-          className={`w-full transition-all duration-500 ${
-            isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-          }`}
+      <div className=" max-w-full">
+      <Card
+  className={`w-full transition-all duration-500 ${
+    isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+  }`}
+>
+  <CardHeader>
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <Button
+        variant="outline"
+        onClick={closeViewModal}
+        className="inline-flex items-center gap-2"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
+      </Button>
+      {canReportBug && (
+        <Button
+          variant="save"
+          onClick={openModal}
+          className="inline-flex items-center gap-2"
         >
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <Button
-                variant="outline"
-                onClick={closeViewModal}
-                className="inline-flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-              {canReportBug && (
-                <Button variant="save"
-                  onClick={openModal}
-                  className="inline-flex items-center gap-2"
-                >
-                  <FiEdit className="h-4 w-4" />
-                  Report Bug
-                </Button>
-              )}
-            </div>
-            <CardTitle className="mt-4 text-2xl font-bold flex items-center gap-2">
-              <FileText className="h-6 w-6 text-primary" />
-              {task.title}
-            </CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Task ID: {task.task_id}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Task Details</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { label: "Project ID", value: task.projectId, Icon: Briefcase, color: "purple" },
-                  { label: "Project Name", value: task.projectName, Icon: FileText, color: "indigo" },
-                  { label: "Assigned To", value: task.assignedTo, Icon: Mail, color: "green" },
-                  { label: "Assigned By", value: task.assignedBy, Icon: UserCheck, color: "indigo" },
-                  { label: "Task Priority", value: task.priority, Icon: Flag, color: "red" },
-                  { label: "Deadline", value: new Date(task.deadline).toLocaleDateString(), Icon: Calendar, color: "orange" },
-                  { label: "Status", value: task.status, Icon: Clock, color: "indigo" },
-                  { label: "Review Status", value: task.reviewStatus, Icon: AlertCircle, color: "yellow" },
-                  { label: "Created At", value: new Date(task.createdAt).toLocaleDateString(), Icon: Calendar, color: "gray" },
-                ].map(({ label, value, Icon, color }, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <div className={`p-2 bg-${color}-100 rounded-md`}>
-                      <Icon className={`h-4 w-4 text-${color}-600`} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">{label}</p>
-                      <p className="text-sm font-semibold text-foreground">{value}</p>
-                    </div>
-                  </div>
-                ))}
+          <FiEdit className="h-4 w-4" />
+          Report Bug
+        </Button>
+      )}
+      
+      {canReportBug && task?.reviewStatus !== "Resolved" && (
+        <Button
+          variant="save"
+          onClick={() => handleMarkAsResolved()}
+          className="inline-flex items-center gap-2"
+        >
+          <FiEdit className="h-4 w-4" />
+          Mark as Resolved
+        </Button>
+      )}
+    
+
+    </div>
+    <CardTitle className="mt-4 text-2xl font-bold flex items-center gap-2">
+      <FileText className="h-6 w-6 text-primary" />
+      {task.title}
+    </CardTitle>
+    <CardDescription className="text-muted-foreground">
+      Task ID: {task.task_id}
+    </CardDescription>
+  </CardHeader>
+  
+  <CardContent className="space-y-6">
+    <div className="grid md:grid-cols-3 gap-6">
+      {/* Task Details - Spans 2 columns on md screens */}
+      <div className="md:col-span-2 space-y-4">
+        <h3 className="text-lg font-semibold">Task Details</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[
+            { label: "Project ID", value: task.projectId, Icon: Briefcase, color: "purple" },
+            { label: "Project Name", value: task.projectName, Icon: FileText, color: "indigo" },
+            { label: "Assigned To", value: task?.assignedToDetails?.memberName, Icon: Mail, color: "green" },
+            { label: "Assigned By", value: task.assignedBy, Icon: UserCheck, color: "indigo" },
+            { label: "Task Priority", value: task.priority, Icon: Flag, color: "red" },
+            { label: "Deadline", value: new Date(task.deadline).toLocaleDateString(), Icon: Calendar, color: "orange" },
+            { label: "Status", value: task.status, Icon: Clock, color: "indigo" },
+            { label: "Review Status", value: task.reviewStatus, Icon: AlertCircle, color: "yellow" },
+            { label: "Created At", value: new Date(task.createdAt).toLocaleDateString(), Icon: Calendar, color: "gray" },
+          ].map(({ label, value, Icon, color }, index) => (
+            <div key={index} className="flex items-start gap-3">
+              <div className={`p-2 bg-${color}-100 rounded-md`}>
+                <Icon className={`h-4 w-4 text-${color}-600`} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">{label}</p>
+                <p className="text-sm font-semibold text-foreground">{value || "N/A"}</p>
               </div>
             </div>
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Description</h3>
-              <div className="bg-muted rounded-lg p-4 min-h-[100px] text-sm text-foreground">
-                {task.description || (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                    <div className="text-center">
-                      <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p>No description available</p>
-                    </div>
-                  </div>
-                )}
+          ))}
+        </div>
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Description</h3>
+          <div className="bg-muted rounded-lg p-4 min-h-[100px] text-sm text-foreground">
+            {task.description || (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                <div className="text-center">
+                  <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>No description available</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Review History - Spans 1 column on md screens */}
+   <div className="md:col-span-1 space-y-4">
+  <h3 className="text-lg font-semibold">Review History</h3>
+  {task.taskHistory && task.taskHistory.length > 0 ? (
+    <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 overflow-hidden">
+      {task.taskHistory.map((entry, index) => (
+        <li key={index} className="p-3 sm:p-4 text-sm text-gray-700 bg-white hover:bg-gray-50 transition">
+          <div className="flex justify-between items-center mb-1">
+            <span className="font-medium text-gray-800">{entry.bug_id}</span>
+            <span className="text-xs text-gray-500">
+              {new Date(entry.timestamp).toLocaleDateString('en-IN')}
+            </span>
+          </div>
+          <div className="text-sm text-gray-600">
+            <p className="font-semibold">Bug Title:</p>
+            <p>{entry.bugTitle || 'Untitled'}</p>
+          </div>
+          <div className="text-sm text-gray-600 mt-1">
+            <p className="font-semibold">Bug Status:</p>
+            <p>{entry.bugStatus || 'Unknown'}</p>
+          </div>
+          <div className="text-sm text-gray-600 mt-1">
+            <p className="font-semibold">Action:</p>
+            <p>{entry.action}</p>
+          </div>
+          <span
+            className={`inline-block mt-2 text-xs font-semibold px-2 py-1 rounded border 
+            ${reviewStatusColors[entry.reviewStatus?.toUpperCase()] || 'bg-gray-100 text-gray-800 border-gray-300'}`}
+          >
+            {entry.reviewStatus}
+          </span>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <div className="flex items-center justify-center h-[100px] text-muted-foreground border border-dashed rounded-lg">
+      <div className="text-center">
+        <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+        <p>No review history available</p>
+      </div>
+    </div>
+  )}
+</div>
+
+    </div>
+  </CardContent>
+</Card>
+
+
 
         {/* Bug Report Modal */}
         {isModalOpen && (
@@ -320,6 +422,33 @@ const ViewTask = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">
+                    Bug Deadline
+                  </label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={`w-full justify-start text-left font-normal ${
+                          !bugDeadline && "text-muted-foreground"
+                        }`}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {bugDeadline ? format(bugDeadline, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <CalendarComponent
+                        mode="single"
+                        selected={bugDeadline}
+                        onSelect={setBugDeadline}
+                        initialFocus
+                        disabled={(date) => date < new Date()} // Disable past dates
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={closeModal}>
@@ -327,7 +456,7 @@ const ViewTask = () => {
                 </Button>
                 <Button
                   onClick={handleSubmit}
-                  disabled={!bugTitle.trim() || !bugDescription.trim()}
+                  disabled={!bugTitle.trim() || !bugDescription.trim() || !bugDeadline}
                 >
                   Submit
                 </Button>
@@ -341,4 +470,3 @@ const ViewTask = () => {
 };
 
 export default ViewTask;
-

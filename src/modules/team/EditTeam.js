@@ -48,11 +48,14 @@ const EditTeam = ({
     teamLeadName: selectedTeam.teamLeadName,
   });
 
-  useEffect(() => {
-    if (membersStatus === 'idle') {
-      dispatch(fetchTeamMembers());
-    }
-  }, [dispatch, membersStatus]);
+  // useEffect(() => {
+  //   if (membersStatus === 'idle') {
+  //     dispatch(fetchTeamMembers());
+  //   }
+  // }, [dispatch, membersStatus]);
+useEffect(() => {
+  dispatch(fetchTeamMembers());
+}, [dispatch]);
 
   const memberOptions =
     allMembers?.map((member) => ({

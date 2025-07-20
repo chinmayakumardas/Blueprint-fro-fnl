@@ -134,6 +134,37 @@ export const fetchTeamsByEmployeeId = createAsyncThunk(
   }
 );
 
+
+export const getTeamMembersByProjectId = createAsyncThunk(
+  'team/getTeamMembersByProjectId',
+  async (projectId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`/team/members/by-project/${projectId}`);
+      return response.data.teamMembers; // return full response as-is
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to fetch team members by project ID'
+      );
+    }
+  }
+);
+
+// Thunk: Delete a team by ID
+export const deleteTeam = createAsyncThunk(
+  'team/deleteTeam',
+  async (teamId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.delete(`/team/soft-delete/${teamId}`);
+      return { teamId, message: response.data?.message || 'Team deleted successfully' };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to delete team'
+      );
+    }
+  }
+);
+
+
 const teamSlice = createSlice({
   name: 'team',
   initialState: {
@@ -146,6 +177,8 @@ const teamSlice = createSlice({
     createTeamStatus: 'idle', // Status for team creation
     error: null, // Unified error
     teamsByEmployee: [],
+    teamMembersByProjectId: [],
+deleteTeamStatus: 'idle',
   },
   reducers: {
     clearSelectedTeam: (state) => {
@@ -289,6 +322,55 @@ const teamSlice = createSlice({
   state.teamsByEmployee = [];
 })
 
+
+//getTeamMembersByProjectId
+.addCase(getTeamMembersByProjectId.pending, (state) => {
+  state.status = 'loading';
+  state.error = null;
+})
+.addCase(getTeamMembersByProjectId.fulfilled, (state, action) => {
+  state.status = 'succeeded';
+  state.teamMembersByProjectId = action.payload; // save full data directly
+})
+.addCase(getTeamMembersByProjectId.rejected, (state, action) => {
+  state.status = 'failed';
+  state.error = action.payload;
+  state.teamMembersByProjectId = [];
+})
+
+// Delete team
+// .addCase(deleteTeam.pending, (state) => {
+//   state.status = 'loading';
+//   state.error = null;
+// })
+// .addCase(deleteTeam.fulfilled, (state, action) => {
+//   state.status = 'succeeded';
+//   // Remove deleted team from `allTeams` and `teamsByProject`
+//   const { teamId } = action.payload;
+//   state.allTeams = state.allTeams.filter((team) => team._id !== teamId);
+//   state.teamsByProject = state.teamsByProject.filter((team) => team._id !== teamId);
+//   console.log()
+// })
+// .addCase(deleteTeam.rejected, (state, action) => {
+//   state.status = 'failed';
+//   state.error = action.payload;
+// })
+
+// Delete team
+      .addCase(deleteTeam.pending, (state) => {
+        state.deleteTeamStatus = 'loading';
+        state.error = null;
+      })
+      .addCase(deleteTeam.fulfilled, (state, action) => {
+        state.deleteTeamStatus = 'succeeded';
+        const { teamId } = action.payload;
+        state.allTeams = state.allTeams.filter((team) => team.teamId !== teamId);
+        state.teamsByProject = state.teamsByProject.filter((team) => team.teamId !== teamId);
+      })
+      .addCase(deleteTeam.rejected, (state, action) => {
+        state.deleteTeamStatus = 'failed';
+        state.error = action.payload;
+      });
       ;
   },
 });

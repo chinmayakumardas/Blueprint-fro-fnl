@@ -66,9 +66,11 @@ export const fetchBugByProjectId = createAsyncThunk(
 //
 export const resolveBug = createAsyncThunk(
   "bugs/resolveBug",
-  async (bugId, { rejectWithValue }) => {
+  async ({bugId,delayReason}, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.put(`/bugs/resolve/${bugId}`);
+      const response = await axiosInstance.put(`/bugs/resolve/${bugId}`,{
+        delayReason
+      });
       return response.data;
     } catch (error) {
       console.error("Error resolving bug:", error);
@@ -97,6 +99,69 @@ export const fetchBugByEmployeeId = createAsyncThunk(
     }
   }
 );
+// Download Bugs by ProjectId
+export const downloadBugsByProjectId = createAsyncThunk(
+  "bugs/downloadBugsByProjectId",
+  async (projectId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`/bugs/download/${projectId}`, {
+        responseType: "blob", // important to handle file download
+      });
+
+      // Create Blob and trigger download
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bugs_${projectId}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      return "Download successful";
+    } catch (error) {
+      console.error("Error downloading bugs:", error);
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to download bugs"
+      );
+    }
+  }
+);
+// Download Bugs by member id
+
+export const downloadBugsByMemberId = createAsyncThunk(
+  "bugs/downloadBugsByMemberId",
+  async ({projectId,memberId}, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`/bugs/download-by-assignee/${projectId}/${memberId}`, {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bugs_member_${memberId}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      return "Member bug report downloaded successfully";
+    } catch (error) {
+      console.error("Error downloading member bugs:", error);
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to download member bug report"
+      );
+    }
+  }
+);
 
 //
 // ✅ Initial State
@@ -113,6 +178,8 @@ const initialState = {
     bugsByProjectId: false,
     bugResolve: false,
     bugsByEmployeeId: false,
+     bugDownload: false,
+     memberBugDownload: false,
   },
   error: {
     bugCreation: null,
@@ -120,9 +187,13 @@ const initialState = {
     bugsByProjectId: null,
     bugResolve: null,
     bugsByEmployeeId: null,
+    bugDownload: null,
+     memberBugDownload: null,
   },
   successMessage: null,
 };
+
+
 
 //
 // ✅ Slice
@@ -245,7 +316,43 @@ const bugSlice = createSlice({
       .addCase(fetchBugByEmployeeId.rejected, (state, action) => {
         state.loading.bugsByEmployeeId = false;
         state.error.bugsByEmployeeId = action.payload;
-      });
+      })
+      
+      //downlad pdf bug report
+      builder
+  .addCase(downloadBugsByProjectId.pending, (state) => {
+    state.loading.bugDownload = true;
+    state.error.bugDownload = null;
+    state.successMessage = null;
+  })
+  .addCase(downloadBugsByProjectId.fulfilled, (state, action) => {
+    state.loading.bugDownload = false;
+    state.successMessage = action.payload;
+  })
+  .addCase(downloadBugsByProjectId.rejected, (state, action) => {
+    state.loading.bugDownload = false;
+    state.error.bugDownload = action.payload;
+  })
+  
+  
+  //member bug downlaod 
+  builder
+  .addCase(downloadBugsByMemberId.pending, (state) => {
+    state.loading.memberBugDownload = true;
+    state.error.memberBugDownload = null;
+    state.successMessage = null;
+  })
+  .addCase(downloadBugsByMemberId.fulfilled, (state, action) => {
+    state.loading.memberBugDownload = false;
+    state.successMessage = action.payload;
+  })
+  .addCase(downloadBugsByMemberId.rejected, (state, action) => {
+    state.loading.memberBugDownload = false;
+    state.error.memberBugDownload = action.payload;
+  });
+;
+
+      ;
   },
 });
 

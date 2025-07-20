@@ -26,11 +26,14 @@ const CreateTeamForm = ({ projectDetails, onSuccess }) => {
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(true);
 
-  useEffect(() => {
-    if (membersStatus === "idle") {
-      dispatch(fetchTeamMembers());
-    }
-  }, [dispatch, membersStatus]);
+  // useEffect(() => {
+  //   if (membersStatus === "idle") {
+  //     dispatch(fetchTeamMembers());
+  //   }
+  // }, [dispatch, membersStatus]);
+useEffect(() => {
+  dispatch(fetchTeamMembers());
+}, [dispatch]);
 
   const memberOptions = useMemo(() => {
     if (!allMembers || !Array.isArray(allMembers)) return [];

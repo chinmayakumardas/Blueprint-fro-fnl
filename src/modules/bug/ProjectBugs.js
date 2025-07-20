@@ -96,7 +96,6 @@ export default function ProjectBugs({ projectId }) {
     open: bugsByProjectId?.filter((bug) => bug.status.toLowerCase() === 'open').length || 0,
     resolved: bugsByProjectId?.filter((bug) => bug.status.toLowerCase() === 'resolved').length || 0,
   };
-console.log('Bug Statistics:', bugsByProjectId);
   // Filter bugs by status
   const filteredBugs = () => {
     let filtered = bugsByProjectId || [];
@@ -458,6 +457,7 @@ console.log('Bug Statistics:', bugsByProjectId);
             </Badge>
           </p>
         </div>
+     
 
         <div className="space-y-1">
           <label className="text-sm font-semibold text-gray-700">Status</label>
@@ -471,9 +471,15 @@ console.log('Bug Statistics:', bugsByProjectId);
         </div>
 
         <div className="space-y-1">
+          <label className="text-sm font-semibold text-gray-700">Deadline</label>
+          <p className="text-muted-foreground">
+            {selectedBug.deadline ? new Date(selectedBug.deadline).toLocaleDateString('en-IN') : 'N/A'}
+          </p>
+        </div>
+        <div className="space-y-1">
           <label className="text-sm font-semibold text-gray-700">Created At</label>
           <p className="text-muted-foreground">
-            {selectedBug.createdAt ? new Date(selectedBug.createdAt).toLocaleString('en-IN') : 'N/A'}
+            {selectedBug.createdAt ? new Date(selectedBug.createdAt).toLocaleDateString('en-IN') : 'N/A'}
           </p>
         </div>
 
